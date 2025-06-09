@@ -1,0 +1,470 @@
+{
+  "Katie S._100": {
+    "name": "Katie S. Katie S. For",
+    "email": "plymouthuccoffice@gmail.com",
+    "phone": null,
+    "risk_score": 100,
+    "platforms": [],
+    "shared": true,
+    "timestamp": "2025-05-29T14:40:39.132031"
+  },
+  "global_identities": [
+    {
+      "alias": "Katie S.",
+      "full_name": "Katie S. Katie S. For",
+      "email": "plymouthuccoffice@gmail.com",
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 100,
+      "stylometry": [
+        "writing_style:terse"
+      ],
+      "location": "Petaluma, CA",
+      "confidence": 100,
+      "timestamp": "2025-05-29T14:40:39.132338"
+    },
+    {
+      "alias": "Katie S.",
+      "full_name": "Katie Sorensen",
+      "email": "plymouthuccoffice@gmail.com",
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 100,
+      "stylometry": [
+        "writing_style:terse"
+      ],
+      "location": "Petaluma, CA",
+      "confidence": 100,
+      "timestamp": "2025-05-29T14:53:48.649749"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 40,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T02:03:11.026138"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 40,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T02:12:18.429759"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 40,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T02:15:53.077589"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 40,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T02:27:00.849559"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 40,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T02:45:10.231563"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 40,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T10:30:29.880749"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 40,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T10:44:04.733472"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 40,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T11:18:40.228639"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 40,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T11:27:50.035105"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 40,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T11:34:34.134823"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 40,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T12:09:02.420306"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-01T12:24:33.769505"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-02T15:41:59.992971"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": "5202326715",
+      "platform": "yelp",
+      "risk_score": 100,
+      "star_rating": 1,
+      "stylometry": [],
+      "critic_flag": true,
+      "matched_platforms": [
+        "blogspot.com"
+      ],
+      "timestamp": "2025-06-02T15:42:44.344484"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-02T21:32:05.904689"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": "8602326715",
+      "platform": "yelp",
+      "risk_score": 100,
+      "star_rating": 3,
+      "stylometry": [],
+      "critic_flag": true,
+      "matched_platforms": [
+        "blogspot.com"
+      ],
+      "timestamp": "2025-06-02T21:33:18.987323"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-02T22:20:14.354228"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": "9142440009",
+      "platform": "yelp",
+      "risk_score": 50,
+      "star_rating": 3,
+      "stylometry": [],
+      "critic_flag": true,
+      "matched_platforms": [
+        "blogspot.com"
+      ],
+      "timestamp": "2025-06-02T22:21:20.091261"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-02T22:38:50.281460"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-02T22:45:56.064512"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": "3143216800",
+      "platform": "yelp",
+      "risk_score": 60,
+      "star_rating": 3,
+      "stylometry": [],
+      "critic_flag": true,
+      "matched_platforms": [
+        "blogspot.com"
+      ],
+      "timestamp": "2025-06-03T00:28:15.915747"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-02T23:06:42.547715"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-02T23:26:53.777185"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-02T23:36:22.211643"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-03T00:26:51.826943"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-03T01:05:23.007682"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-03T01:09:35.730552"
+    },
+    {
+      "alias": "Seth D.",
+      "full_name": "Seth Schraier",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 95,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-03T10:11:40.716337"
+    },
+    {
+      "alias": "Seth D",
+      "full_name": "Seth Potash",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 85,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-03T10:38:05.866887"
+    },
+    {
+      "alias": "Seth D",
+      "full_name": "Seth Potash",
+      "email": null,
+      "phone": "8139498731",
+      "platform": "yelp",
+      "risk_score": 10,
+      "star_rating": 5,
+      "stylometry": [],
+      "critic_flag": false,
+      "matched_platforms": [
+        "blogspot.com"
+      ],
+      "timestamp": "2025-06-03T10:40:06.695633"
+    },
+    {
+      "alias": "Seth D",
+      "full_name": "Seth Potash",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 85,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-03T11:15:05.844965"
+    },
+    {
+      "alias": "Seth D",
+      "full_name": "Seth Potash",
+      "email": null,
+      "phone": "8604648930",
+      "platform": "yelp",
+      "risk_score": 10,
+      "star_rating": 5,
+      "stylometry": [],
+      "critic_flag": false,
+      "matched_platforms": [
+        "blogspot.com"
+      ],
+      "timestamp": "2025-06-03T11:17:01.476252"
+    },
+    {
+      "alias": "Seth D",
+      "full_name": "Seth Potash",
+      "email": null,
+      "phone": null,
+      "platform": "yelp",
+      "risk_score": 85,
+      "stylometry": [],
+      "location": "Waltham, MA",
+      "confidence": 85,
+      "timestamp": "2025-06-03T11:39:26.234140"
+    },
+    {
+      "alias": "Seth D",
+      "full_name": "Seth Potash",
+      "email": null,
+      "phone": "5167665444",
+      "platform": "yelp",
+      "risk_score": 10,
+      "star_rating": 5,
+      "stylometry": [],
+      "critic_flag": false,
+      "matched_platforms": [
+        "blogspot.com"
+      ],
+      "timestamp": "2025-06-03T11:41:24.705439"
+    }
+  ]
+}
