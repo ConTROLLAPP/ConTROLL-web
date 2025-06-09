@@ -1,0 +1,230 @@
+{
+  "seth_d.": {
+    "full_name": "Seth D.",
+    "risk_score": 100,
+    "star_rating": 1,
+    "matched_platforms": [
+      "instagram",
+      "yelp",
+      "tripadvisor"
+    ],
+    "review_text": "",
+    "known_aliases": [
+      "instagram",
+      "yelp",
+      "tripadvisor"
+    ],
+    "last_updated": "2024-01-20"
+  },
+  "seth_d": {
+    "full_name": "Seth D",
+    "risk_score": 100,
+    "star_rating": 1,
+    "matched_platforms": [
+      "yelp",
+      "tripadvisor",
+      "facebook",
+      "instagram"
+    ],
+    "review_text": "Seth D.: Eek me thinks not. The good thing about this place is that it's open all year round. So if you come during the off season, you can find dinner here. Everything else I have nothing good to say.",
+    "known_aliases": [
+      "yelp",
+      "tripadvisor",
+      "facebook",
+      "instagram"
+    ],
+    "last_updated": "2024-01-20"
+  },
+  "for_d": {
+    "full_name": "For D",
+    "risk_score": 100,
+    "star_rating": 1,
+    "matched_platforms": [
+      "yelp",
+      "tripadvisor",
+      "facebook",
+      "instagram"
+    ],
+    "review_text": "",
+    "known_aliases": [
+      "yelp",
+      "tripadvisor",
+      "facebook",
+      "instagram"
+    ],
+    "last_updated": "2024-01-20"
+  },
+  "seth_doria": {
+    "full_name": "Seth Doria",
+    "risk_score": 100,
+    "star_rating": 1,
+    "matched_platforms": [],
+    "review_text": "Seth D.:Eek me thinks not. The good thing about this place is that it's open all year round. So if you come during the off season, you can find dinner here. Everything else I have nothing good to say.",
+    "known_aliases": [],
+    "last_updated": "2024-01-20"
+  },
+  "seth_d.:eek_me_thinks_not": {
+    "full_name": "Seth D.:Eek me thinks not",
+    "risk_score": 100,
+    "star_rating": 1,
+    "matched_platforms": [],
+    "review_text": "Seth D.:Eek me thinks not. The good thing about this place is that it's open all year round. So if you come during the off season, you can find dinner here. Everything else I have nothing good to say.",
+    "known_aliases": [],
+    "last_updated": "2024-01-20"
+  },
+  "sethd.": {
+    "full_name": "SethD.",
+    "risk_score": 100,
+    "star_rating": 1,
+    "matched_platforms": [
+      "tripadvisor",
+      "instagram"
+    ],
+    "review_text": "",
+    "known_aliases": [
+      "tripadvisor",
+      "instagram"
+    ],
+    "last_updated": "2024-01-20"
+  },
+  "Seth D. Potash": {
+    "email": "aiko.bunn@avisbudget.com",
+    "phone": "0001767593",
+    "risk_score": 100,
+    "platforms": [
+      "Facebook",
+      "Yelp"
+    ],
+    "notes": [
+      "High risk based on identity resolution",
+      "Potential troll behavior detected"
+    ]
+  },
+  "Amy B. Beethe": {
+    "full_name": "Amy B. Beethe",
+    "email": "amyt@neci.edu",
+    "phone": "927-1305218",
+    "alias": "Amy B.",
+    "platforms": [
+      "Yelp"
+    ],
+    "risk_score": 100,
+    "location": "Santa Cruz, CA",
+    "stylometry_flags": [
+      "I usually don't write bad reviews but\u2026"
+    ],
+    "matched_review_text": "I usually don't write bad reviews but\u2026 this place was a total letdown. We waited over an hour for food that came out cold. The staff seemed annoyed we were even there. Honestly, I expected more from a place with such good reviews. Won't be coming back.",
+    "notes": [
+      "Chronic negative reviewer with stylometric trigger phrases. Risk level: HIGH. Add to TrollNet."
+    ]
+  },
+  "Frank Christopher": {
+    "email": "frankjc501@aol.com",
+    "phone": "9174502384",
+    "stylometry_flags": [],
+    "influencer_flag": null,
+    "writing_snippets": [],
+    "last_scan": "2025-05-30",
+    "final_risk_score": 20,
+    "star_rating": 4,
+    "rating_reason": "Low confidence",
+    "last_evaluation": "2025-06-02",
+    "evaluation_method": "enhanced_decision_engine"
+  },
+  "Mike Choe": {
+    "email": "mchoe@charlesbank.com",
+    "phone": "6173359920",
+    "stylometry_flags": [],
+    "influencer_flag": null,
+    "writing_snippets": [],
+    "last_scan": "2025-05-30"
+  },
+  "Amy Bouzagio": {
+    "email": "amy.bouzagio@gmail.com",
+    "phone": "9174505555",
+    "stylometry_flags": [],
+    "influencer_flag": null,
+    "writing_snippets": [],
+    "last_scan": "2025-05-30"
+  },
+  "Seth Schraier": {
+    "email": null,
+    "phone": "3143216800",
+    "stylometry_flags": [],
+    "influencer_flag": null,
+    "writing_snippets": [],
+    "last_scan": "2025-05-30",
+    "star_rating": 1,
+    "final_risk_score": 40,
+    "last_rating_update": "2025-06-02",
+    "rating_reason": "High confidence, Confirmed critic",
+    "last_evaluation": "2025-06-02",
+    "evaluation_method": "enhanced_decision_engine",
+    "phones": [
+      "3143216800"
+    ],
+    "star_ratings_history": [
+      3,
+      1
+    ],
+    "conflict_resolution": [
+      "Star conflict: 3 vs 1 - using conservative (1)"
+    ],
+    "last_updated": "2025-06-03 10:11:40",
+    "conflict_resolved": true
+  },
+  "Schraier": {
+    "star_rating": 1,
+    "final_risk_score": 95,
+    "last_rating_update": "2025-05-30"
+  },
+  "Beethe": {
+    "email": null,
+    "phone": null,
+    "risk_score": 85,
+    "notes": [],
+    "cold_reviews_matched": [
+      {
+        "handle": "Amy B.",
+        "platform": "Yelp",
+        "review_snippet": "I usually don't write bad reviews but\u2026 this place was a total letdown. We waited over an hour for food that came out cold...",
+        "matched_date": "2025-06-02"
+      }
+    ]
+  },
+  "Emily Minowitz": {
+    "final_risk_score": 20,
+    "star_rating": 4,
+    "rating_reason": "Low confidence",
+    "last_evaluation": "2025-06-02",
+    "evaluation_method": "enhanced_decision_engine"
+  },
+  "5": {
+    "final_risk_score": 20,
+    "star_rating": 4,
+    "rating_reason": "Low confidence",
+    "last_evaluation": "2025-06-02",
+    "evaluation_method": "enhanced_decision_engine"
+  },
+  "Seth Potash": {
+    "email": null,
+    "phone": null,
+    "phones": [],
+    "emails": [],
+    "risk_score": 85,
+    "confidence_score": 85,
+    "verified_identity": "Seth Potash",
+    "alias_source": "Seth D",
+    "platform": "yelp",
+    "stylometry_flags": [],
+    "matched_platforms": [],
+    "star_rating": 5,
+    "last_scan": "2025-06-03 10:38:05",
+    "last_updated": "2025-06-03 11:39:26",
+    "rating_reason": "High confidence",
+    "final_risk_score": 0,
+    "last_rating_update": "2025-06-02",
+    "evaluation_method": "enhanced_decision_engine",
+    "conflict_resolved": true
+  }
+}
