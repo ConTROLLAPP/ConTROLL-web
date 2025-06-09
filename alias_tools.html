@@ -1,1 +1,30 @@
-
+{% extends "base.html" %}
+{% block title %}Alias Tools{% endblock %}
+{% block content %}
+  <h2>Alias + Ghost Investigator</h2>
+  <form method="POST">
+    <div class="mb-3">
+      <label for="alias" class="form-label">Reviewer Handle</label>
+      <input type="text" class="form-control" id="alias" name="alias" required>
+    </div>
+    <div class="mb-3">
+      <label for="platform" class="form-label">Platform (Yelp, Google, etc)</label>
+      <input type="text" class="form-control" id="platform" name="platform">
+    </div>
+    <div class="mb-3">
+      <label for="location" class="form-label">Location (e.g., Boston, MA)</label>
+      <input type="text" class="form-control" id="location" name="location">
+    </div>
+    <div class="mb-3">
+      <label for="review" class="form-label">Paste Sample Review</label>
+      <textarea class="form-control" id="review" name="review" rows="6"></textarea>
+    </div>
+    <button type="submit" class="btn btn-danger">Run Alias MRI</button>
+  </form>
+  {% if result %}
+    <div class="mt-4">
+      <h4>Alias Report</h4>
+      <pre>{{ result }}</pre>
+    </div>
+  {% endif %}
+{% endblock %}
