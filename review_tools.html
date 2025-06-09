@@ -1,1 +1,18 @@
-
+{% extends "base.html" %}
+{% block title %}Review Tools{% endblock %}
+{% block content %}
+  <h2>Review Text MRI Analysis</h2>
+  <form method="POST">
+    <div class="mb-3">
+      <label for="review" class="form-label">Paste Review Text</label>
+      <textarea class="form-control" id="review" name="review" rows="6" required></textarea>
+    </div>
+    <button type="submit" class="btn btn-success">Analyze</button>
+  </form>
+  {% if result %}
+    <div class="mt-4">
+      <h4>Analysis Results</h4>
+      <pre>{{ result }}</pre>
+    </div>
+  {% endif %}
+{% endblock %}
