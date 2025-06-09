@@ -1,1 +1,26 @@
-
+{% extends "base.html" %}
+{% block title %}Guest Tools{% endblock %}
+{% block content %}
+  <h2>Guest Profile Scanner</h2>
+  <form method="POST">
+    <div class="mb-3">
+      <label for="name" class="form-label">Full Name</label>
+      <input type="text" class="form-control" id="name" name="name" required>
+    </div>
+    <div class="mb-3">
+      <label for="phone" class="form-label">Phone Number</label>
+      <input type="text" class="form-control" id="phone" name="phone">
+    </div>
+    <div class="mb-3">
+      <label for="email" class="form-label">Email Address</label>
+      <input type="email" class="form-control" id="email" name="email">
+    </div>
+    <button type="submit" class="btn btn-primary">Run MRI Scan</button>
+  </form>
+  {% if result %}
+    <div class="mt-4">
+      <h4>Scan Results</h4>
+      <pre>{{ result }}</pre>
+    </div>
+  {% endif %}
+{% endblock %}
