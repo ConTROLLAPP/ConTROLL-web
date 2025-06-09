@@ -1,1 +1,11 @@
-
+{% extends "base.html" %}
+{% block title %}ConTROLL Dashboard{% endblock %}
+{% block content %}
+  <h2 class="mt-4">Welcome to ConTROLL</h2>
+  <p class="lead">Use the tools below to run guest scans, review checks, or alias investigations.</p>
+  <div class="list-group mt-4">
+    <a href="/guest" class="list-group-item list-group-item-action">Guest Tools</a>
+    <a href="/review" class="list-group-item list-group-item-action">Review Tools</a>
+    <a href="/alias" class="list-group-item list-group-item-action">Alias Tools</a>
+  </div>
+{% endblock %}
