@@ -1,21 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Guest Tools</title>
+    <title>Review Tools</title>
 </head>
 <body>
-    <h1>Guest Tools</h1>
-    <form method="POST" action="/api/guest/search">
-        <label>Name:</label><br>
-        <input type="text" name="name" required><br><br>
+    <h1>Review Tools</h1>
+    <form method="POST" action="/api/review/analyze">
+        <label>Paste Full Review Text:</label><br>
+        <textarea name="review_text" rows="10" cols="60" required></textarea><br><br>
 
-        <label>Email (optional):</label><br>
-        <input type="email" name="email"><br><br>
-
-        <label>Phone (optional):</label><br>
-        <input type="text" name="phone"><br><br>
-
-        <input type="submit" value="Run Guest Scan">
+        <input type="submit" value="Analyze Review">
     </form>
     <br>
     <a href="/">Back to Home</a>
