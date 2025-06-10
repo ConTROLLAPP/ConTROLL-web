@@ -1,4 +1,16 @@
-{% extends "base.html" %}
-{% block content %}
-<h1>Welcome to ConTROLL</h1>
-{% endblock %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Review Tools</title>
+</head>
+<body>
+    <h1>Review Tools</h1>
+    <form method="POST" action="/review_tools">
+        <label>Paste Full Review Text:</label><br>
+        <textarea name="review_text" rows="8" cols="60"></textarea><br><br>
+        <input type="submit" value="Analyze Review">
+    </form>
+    <br>
+    <a href="/">Back to Home</a>
+</body>
+</html>
