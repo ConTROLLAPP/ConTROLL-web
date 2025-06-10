@@ -1,20 +1,21 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Guest Tools</title>
-</head>
-<body>
-    <h1>Guest Tools</h1>
-    <form method="POST" action="/guest_tools">
-        <label>Name:</label><br>
-        <input type="text" name="name"><br><br>
-        <label>Email (optional):</label><br>
-        <input type="email" name="email"><br><br>
-        <label>Phone (optional):</label><br>
-        <input type="text" name="phone"><br><br>
-        <input type="submit" value="Run Guest Scan">
-    </form>
-    <br>
-    <a href="/">Back to Home</a>
-</body>
-</html>
+{% extends "base.html" %}
+
+{% block content %}
+<h1 class="mb-4">Guest Tools</h1>
+<form method="POST" action="/api/guest/search">
+  <div class="mb-3">
+    <label class="form-label">Name</label>
+    <input type="text" name="name" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Email (optional)</label>
+    <input type="email" name="email" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Phone (optional)</label>
+    <input type="text" name="phone" class="form-control">
+  </div>
+  <button type="submit" class="btn btn-primary">Run Guest Scan</button>
+</form>
+<a href="/" class="btn btn-link mt-3">Back to Home</a>
+{% endblock %}
