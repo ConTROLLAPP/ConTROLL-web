@@ -1,4 +1,18 @@
-{% extends "base.html" %}
-{% block content %}
-<h1>Welcome to ConTROLL</h1>
-{% endblock %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alias + Ghost Tools</title>
+</head>
+<body>
+    <h1>Alias + Ghost Tools</h1>
+    <form method="POST" action="/alias_tools">
+        <label>Alias or Name:</label><br>
+        <input type="text" name="alias"><br><br>
+        <label>Paste Review (optional):</label><br>
+        <textarea name="review" rows="6" cols="50"></textarea><br><br>
+        <input type="submit" value="Investigate Alias">
+    </form>
+    <br>
+    <a href="/">Back to Home</a>
+</body>
+</html>
