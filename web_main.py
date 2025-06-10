@@ -41,6 +41,7 @@ def guest_tools():
 
 @app.route('/alias_tools', methods=['GET', 'POST'])
 def alias_tools():
+    mri_results = None
     if request.method == 'POST':
         handle = request.form.get('handle')
         location = request.form.get('location')
@@ -61,12 +62,9 @@ def alias_tools():
                 'trace': traceback.format_exc()
             }
 
-        # Debug output for Render log
-        print("🔬 MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
+        print("\U0001F52C MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
 
-        return render_template('alias_tools.html', results=mri_results)
-
-    return render_template('alias_tools.html')
+    return render_template('alias_tools.html', results=mri_results)
 
 @app.route('/review_tools')
 def review_tools():
