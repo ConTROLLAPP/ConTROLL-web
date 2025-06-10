@@ -1,26 +1,28 @@
-<form method="POST" action="/alias_tools" class="mb-4">
-<html>
-<head>
-    <title>Alias + Ghost Tools</title>
-    <link rel="stylesheet" type="text/css" href="/static/style.css">
-</head>
-<body>
-    <h1>Alias + Ghost Tools</h1>
-        <label for="handle">Alias or Name:</label><br>
-        <input type="text" id="handle" name="handle" required><br><br>
+@app.route('/alias_tools', methods=['GET', 'POST'])
+def alias_tools():
+    if request.method == 'POST':
+        handle = request.form.get('handle')
+        location = request.form.get('location')
+        platform = request.form.get('platform')
+        review_text = request.form.get('review_text')
 
-        <label for="location">Location (optional):</label><br>
-        <input type="text" id="location" name="location"><br><br>
+        try:
+            mri_results = enhanced_mri_scan(
+                alias=handle,
+                location=location,
+                platform=platform,
+                review=review_text,
+                verbose=True
+            )
+        except Exception as e:
+            mri_results = {
+                'error': str(e),
+                'trace': traceback.format_exc()
+            }
 
-        <label for="platform">Platform (optional):</label><br>
-        <input type="text" id="platform" name="platform"><br><br>
+        # 🔍 Debug print for Render logs
+        print("🔬 MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
 
-        <label for="review_text">Paste Review:</label><br>
-        <textarea id="review_text" name="review_text" rows="10" cols="60"></textarea><br><br>
+        return render_template('alias_tools.html', results=mri_results)
 
-        <input type="submit" value="Investigate Alias">
-    </form>
-    <br>
-    <a href="/">Back to Home</a>
-</body>
-</html>
+    return render_template('alias_tools.html')
