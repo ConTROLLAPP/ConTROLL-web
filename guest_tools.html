@@ -1,26 +1,67 @@
 {% extends "base.html" %}
-{% block title %}Guest Tools{% endblock %}
+
 {% block content %}
-  <h2>Guest Profile Scanner</h2>
-  <form method="POST">
-    <div class="mb-3">
-      <label for="name" class="form-label">Full Name</label>
-      <input type="text" class="form-control" id="name" name="name" required>
+<h1 class="mb-4">Guest Tools</h1>
+<form method="POST" action="/api/guest/search" class="mb-4">
+  <div class="mb-3">
+    <label class="form-label">Name</label>
+    <input type="text" name="name" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Email (optional)</label>
+    <input type="email" name="email" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Phone (optional)</label>
+    <input type="text" name="phone" class="form-control">
+  </div>
+  <button type="submit" class="btn btn-primary">Run Guest Scan</button>
+</form>
+
+{% if guest %}
+  <div class="card mt-4">
+    <div class="card-header">
+      <h5 class="mb-0">Scan Results for {{ guest.name }}</h5>
     </div>
-    <div class="mb-3">
-      <label for="phone" class="form-label">Phone Number</label>
-      <input type="text" class="form-control" id="phone" name="phone">
+    <div class="card-body">
+      <p><strong>Email:</strong> {{ guest.email }}</p>
+      <p><strong>Phone:</strong> {{ guest.phone }}</p>
+      <p><strong>Star Rating:</strong> {{ guest.rating }} ⭐</p>
+      <p><strong>Risk Score:</strong> {{ guest.risk_score }}</p>
+      <p><strong>Summary:</strong> {{ guest.summary }}</p>
+
+      {% if guest.clues %}
+        <hr>
+        <h6>Clue Matches:</h6>
+        <ul>
+          {% for clue in guest.clues %}
+            <li>{{ clue }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      {% if guest.platforms %}
+        <hr>
+        <h6>Platform Links:</h6>
+        <ul>
+          {% for platform in guest.platforms %}
+            <li><a href="{{ platform }}" target="_blank">{{ platform }}</a></li>
+          {% endfor %}
+        </ul>
+      {% endif %}
+
+      {% if guest.notes %}
+        <hr>
+        <h6>Shared Guest Notes:</h6>
+        <ul>
+          {% for note in guest.notes %}
+            <li>{{ note }}</li>
+          {% endfor %}
+        </ul>
+      {% endif %}
     </div>
-    <div class="mb-3">
-      <label for="email" class="form-label">Email Address</label>
-      <input type="email" class="form-control" id="email" name="email">
-    </div>
-    <button type="submit" class="btn btn-primary">Run MRI Scan</button>
-  </form>
-  {% if result %}
-    <div class="mt-4">
-      <h4>Scan Results</h4>
-      <pre>{{ result }}</pre>
-    </div>
-  {% endif %}
+  </div>
+{% endif %}
+
+<a href="/" class="btn btn-link mt-4">← Back to Home</a>
 {% endblock %}
