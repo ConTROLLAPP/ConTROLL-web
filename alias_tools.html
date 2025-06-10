@@ -1,26 +1,32 @@
-<!DOCTYPE html>
-<html>
-<head>
-    <title>Alias + Ghost Tools</title>
-</head>
-<body>
-    <h1>Alias + Ghost Tools</h1>
-    <form method="POST" action="/api/alias/investigate">
-        <label>Alias or Name:</label><br>
-        <input type="text" name="handle" required><br><br>
+{% extends "base.html" %}
 
-        <label>Location (optional):</label><br>
-        <input type="text" name="location"><br><br>
+{% block content %}
+<h1 class="mb-4">Alias + Ghost Tools</h1>
+<form method="POST" action="/alias_tools">
+  <div class="mb-3">
+    <label class="form-label">Alias or Name</label>
+    <input type="text" name="handle" class="form-control" required>
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Location (optional)</label>
+    <input type="text" name="location" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Platform (optional)</label>
+    <input type="text" name="platform" class="form-control">
+  </div>
+  <div class="mb-3">
+    <label class="form-label">Paste Review (optional)</label>
+    <textarea name="review_text" rows="6" class="form-control"></textarea>
+  </div>
+  <button type="submit" class="btn btn-primary">Investigate Alias</button>
+</form>
 
-        <label>Platform (optional):</label><br>
-        <input type="text" name="platform"><br><br>
+{% if results %}
+<hr>
+<h4>Alias Investigation Results</h4>
+<pre>{{ results | tojson(indent=2) }}</pre>
+{% endif %}
 
-        <label>Paste Review (optional):</label><br>
-        <textarea name="review_text" rows="6" cols="60"></textarea><br><br>
-
-        <input type="submit" value="Investigate Alias">
-    </form>
-    <br>
-    <a href="/">Back to Home</a>
-</body>
-</html>
+<a href="/" class="btn btn-link mt-3">Back to Home</a>
+{% endblock %}
