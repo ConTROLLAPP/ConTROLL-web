@@ -49,7 +49,7 @@ def alias_tools():
 
         try:
             mri_results = enhanced_mri_scan(
-                name=handle,
+                alias=handle,
                 location=location,
                 platform=platform,
                 review=review_text,
@@ -61,7 +61,7 @@ def alias_tools():
                 'trace': traceback.format_exc()
             }
 
-        print("🔌 MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
+        print("\ud83d\udd0c MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
         return render_template('alias_tools.html', results=mri_results)
 
     return render_template('alias_tools.html')
