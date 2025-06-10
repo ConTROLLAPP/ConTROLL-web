@@ -68,3 +68,27 @@ def alias_tools():
 @app.route('/review_tools')
 def review_tools():
     return render_template('review_tools.html')
+
+@app.route('/api/guest/search', methods=['POST'])
+def guest_search():
+    name = request.form.get('name', '')
+    email = request.form.get('email', '')
+    phone = request.form.get('phone', '')
+
+    try:
+        result = run_full_guest_search(name=name, email=email, phone=phone)
+        star_rating = get_star_rating(name, email, phone)
+        guest_note = get_shared_notes(name, email, phone)
+        global_alert = check_shared_guest_alert(name, email, phone)
+        shared_guest_count = get_shared_guest_count(name, email, phone)
+
+        return render_template('guest_tools.html',
+                               result=result,
+                               star_rating=star_rating,
+                               guest_note=guest_note,
+                               global_alert=global_alert,
+                               shared_guest_count=shared_guest_count)
+
+    except Exception as e:
+        return render_template('guest_tools.html',
+                               result={'error': str(e), 'trace': traceback.format_exc()})
