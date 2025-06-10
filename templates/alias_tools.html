@@ -1,28 +1,29 @@
-@app.route('/alias_tools', methods=['GET', 'POST'])
-def alias_tools():
-    if request.method == 'POST':
-        handle = request.form.get('handle')
-        location = request.form.get('location')
-        platform = request.form.get('platform')
-        review_text = request.form.get('review_text')
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Alias MRI Search</title>
+</head>
+<body>
+    <h1>Alias MRI Search</h1>
+    <form method="POST">
+        <label for="handle">Alias/Handle:</label><br>
+        <input type="text" id="handle" name="handle" required><br><br>
 
-        try:
-            mri_results = enhanced_mri_scan(
-                alias=handle,
-                location=location,
-                platform=platform,
-                review=review_text,
-                verbose=True
-            )
-        except Exception as e:
-            mri_results = {
-                'error': str(e),
-                'trace': traceback.format_exc()
-            }
+        <label for="location">Location:</label><br>
+        <input type="text" id="location" name="location"><br><br>
 
-        # 🔍 Debug print for Render logs
-        print("🔬 MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
+        <label for="platform">Platform (e.g. Yelp):</label><br>
+        <input type="text" id="platform" name="platform"><br><br>
 
-        return render_template('alias_tools.html', results=mri_results)
+        <label for="review_text">Review Text:</label><br>
+        <textarea id="review_text" name="review_text" rows="6" cols="60"></textarea><br><br>
 
-    return render_template('alias_tools.html')
+        <button type="submit">Run MRI Scan</button>
+    </form>
+
+    {% if results %}
+        <h2>Results:</h2>
+        <pre>{{ results | tojson(indent=2) }}</pre>
+    {% endif %}
+</body>
+</html>
