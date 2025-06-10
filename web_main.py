@@ -48,9 +48,18 @@ def alias_tools():
         review_text = request.form.get('review_text')
 
         try:
-            mri_results = enhanced_mri_scan(handle)
+            mri_results = enhanced_mri_scan(
+                alias=handle,
+                location=location,
+                platform=platform,
+                review=review_text,
+                verbose=True
+            )
         except Exception as e:
-            mri_results = {'error': str(e)}
+            mri_results = {
+                'error': str(e),
+                'trace': traceback.format_exc()
+            }
 
         return render_template('alias_tools.html', results=mri_results)
 
