@@ -61,6 +61,9 @@ def alias_tools():
                 'trace': traceback.format_exc()
             }
 
+        # Debug output for Render log
+        print("🔬 MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
+
         return render_template('alias_tools.html', results=mri_results)
 
     return render_template('alias_tools.html')
