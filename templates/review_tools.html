@@ -1,13 +1,23 @@
-{% extends "base.html" %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Guest Tools</title>
+</head>
+<body>
+    <h1>Guest Tools</h1>
+    <form method="POST" action="/api/guest/search">
+        <label>Name:</label><br>
+        <input type="text" name="name" required><br><br>
 
-{% block content %}
-<h1 class="mb-4">Review Tools</h1>
-<form method="POST" action="/api/review/analyze">
-  <div class="mb-3">
-    <label class="form-label">Paste Full Review Text</label>
-    <textarea name="review_text" rows="8" class="form-control"></textarea>
-  </div>
-  <button type="submit" class="btn btn-primary">Analyze Review</button>
-</form>
-<a href="/" class="btn btn-link mt-3">Back to Home</a>
-{% endblock %}
+        <label>Email (optional):</label><br>
+        <input type="email" name="email"><br><br>
+
+        <label>Phone (optional):</label><br>
+        <input type="text" name="phone"><br><br>
+
+        <input type="submit" value="Run Guest Scan">
+    </form>
+    <br>
+    <a href="/">Back to Home</a>
+</body>
+</html>
