@@ -1,4 +1,20 @@
-{% extends "base.html" %}
-{% block content %}
-<h1>Welcome to ConTROLL</h1>
-{% endblock %}
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Guest Tools</title>
+</head>
+<body>
+    <h1>Guest Tools</h1>
+    <form method="POST" action="/guest_tools">
+        <label>Name:</label><br>
+        <input type="text" name="name"><br><br>
+        <label>Email (optional):</label><br>
+        <input type="email" name="email"><br><br>
+        <label>Phone (optional):</label><br>
+        <input type="text" name="phone"><br><br>
+        <input type="submit" value="Run Guest Scan">
+    </form>
+    <br>
+    <a href="/">Back to Home</a>
+</body>
+</html>
