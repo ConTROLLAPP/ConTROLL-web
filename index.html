@@ -1,11 +1,16 @@
 {% extends "base.html" %}
-{% block title %}ConTROLL Dashboard{% endblock %}
+
 {% block content %}
-  <h2 class="mt-4">Welcome to ConTROLL</h2>
-  <p class="lead">Use the tools below to run guest scans, review checks, or alias investigations.</p>
-  <div class="list-group mt-4">
-    <a href="/guest" class="list-group-item list-group-item-action">Guest Tools</a>
-    <a href="/review" class="list-group-item list-group-item-action">Review Tools</a>
-    <a href="/alias" class="list-group-item list-group-item-action">Alias Tools</a>
-  </div>
+<h1 class="mb-4">🛡️ Welcome to ConTROLL</h1>
+<p class="lead">Restaurant Reputation Defense System</p>
+
+<div class="d-grid gap-3 mt-4">
+  <a href="{{ url_for('guest_tools') }}" class="btn btn-primary btn-lg">Guest Tools</a>
+  <a href="{{ url_for('alias_tools') }}" class="btn btn-danger btn-lg">Alias + Ghost Tools</a>
+  <a href="{{ url_for('review_tools') }}" class="btn btn-secondary btn-lg">Review Tools</a>
+</div>
+
+<hr class="my-5">
+
+<p class="text-muted">Built to help restaurants identify and defend against chronic trolls, review bombs, and hidden critics.</p>
 {% endblock %}
