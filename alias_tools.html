@@ -2,31 +2,67 @@
 
 {% block content %}
 <h1 class="mb-4">Alias + Ghost Tools</h1>
-<form method="POST" action="/alias_tools">
+<form method="POST" action="/alias_tools" class="mb-4">
   <div class="mb-3">
-    <label class="form-label">Alias or Name</label>
+    <label class="form-label">Reviewer Handle / Alias</label>
     <input type="text" name="handle" class="form-control" required>
   </div>
   <div class="mb-3">
-    <label class="form-label">Location (optional)</label>
+    <label class="form-label">Location (if known)</label>
     <input type="text" name="location" class="form-control">
   </div>
   <div class="mb-3">
-    <label class="form-label">Platform (optional)</label>
+    <label class="form-label">Platform (e.g., Yelp, Google)</label>
     <input type="text" name="platform" class="form-control">
   </div>
   <div class="mb-3">
-    <label class="form-label">Paste Review (optional)</label>
-    <textarea name="review_text" rows="6" class="form-control"></textarea>
+    <label class="form-label">Full Review Text</label>
+    <textarea name="review_text" class="form-control" rows="5" placeholder="Paste the full review text..."></textarea>
   </div>
-  <button type="submit" class="btn btn-primary">Investigate Alias</button>
+  <button type="submit" class="btn btn-danger">Run MRI Scan</button>
 </form>
 
 {% if results %}
-<hr>
-<h4>Alias Investigation Results</h4>
-<pre>{{ results | tojson(indent=2) }}</pre>
+  {% if results.error %}
+    <div class="alert alert-danger">
+      <strong>Error:</strong> {{ results.error }}<br>
+      <pre>{{ results.trace }}</pre>
+    </div>
+  {% else %}
+    <div class="card mt-4">
+      <div class="card-header">
+        <h5>Scan Results</h5>
+      </div>
+      <div class="card-body">
+        <p><strong>Resolved Name:</strong> {{ results.name }}</p>
+        <p><strong>Confidence Score:</strong> {{ results.confidence }}</p>
+        <p><strong>Platform Matches:</strong> {{ results.platforms }}</p>
+        <p><strong>Star Rating:</strong> {{ results.rating }}</p>
+        <p><strong>Stylometric Flags:</strong> {{ results.stylometry }}</p>
+
+        {% if results.clues %}
+          <hr>
+          <h6>Clue Matches:</h6>
+          <ul>
+            {% for clue in results.clues %}
+              <li>{{ clue }}</li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+
+        {% if results.links %}
+          <hr>
+          <h6>Matched Profiles:</h6>
+          <ul>
+            {% for link in results.links %}
+              <li><a href="{{ link }}" target="_blank">{{ link }}</a></li>
+            {% endfor %}
+          </ul>
+        {% endif %}
+      </div>
+    </div>
+  {% endif %}
 {% endif %}
 
-<a href="/" class="btn btn-link mt-3">Back to Home</a>
+<a href="/" class="btn btn-link mt-4">← Back to Home</a>
 {% endblock %}
