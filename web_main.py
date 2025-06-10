@@ -39,12 +39,23 @@ def home():
 def guest_tools():
     return render_template('guest_tools.html')
 
-@app.route('/alias_tools')
+@app.route('/alias_tools', methods=['GET', 'POST'])
 def alias_tools():
+    if request.method == 'POST':
+        handle = request.form.get('handle')
+        location = request.form.get('location')
+        platform = request.form.get('platform')
+        review_text = request.form.get('review_text')
+
+        try:
+            mri_results = enhanced_mri_scan(handle)
+        except Exception as e:
+            mri_results = {'error': str(e)}
+
+        return render_template('alias_tools.html', results=mri_results)
+
     return render_template('alias_tools.html')
 
 @app.route('/review_tools')
 def review_tools():
     return render_template('review_tools.html')
-
-# (Rest of the routes stay unchanged from your working version)
