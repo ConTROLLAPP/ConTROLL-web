@@ -1,4 +1,3 @@
-
 import os
 import requests
 import json
@@ -22,13 +21,13 @@ def expand_alias_variants(alias: str) -> List[str]:
     Generate possible name variations for an alias like 'Seth D.'
     """
     variants = [alias]  # Always include original
-    
+
     # Handle initials like "Seth D."
     alias_parts = alias.strip().split()
     if len(alias_parts) == 2 and alias_parts[1].endswith('.'):
         first_name = alias_parts[0]
         initial = alias_parts[1].replace('.', '').upper()
-        
+
         # Common surname expansions by initial
         surname_map = {
             'D': ["Doria", "Daniels", "Davidson", "Davis", "Donohue", "Dunn", "Dalton"],
@@ -37,13 +36,13 @@ def expand_alias_variants(alias: str) -> List[str]:
             'S': ["Schraier", "Smith", "Scott", "Stewart", "Sullivan", "Sanders"],
             'M': ["Miller", "Moore", "Martin", "Martinez", "Murphy", "Mitchell"]
         }
-        
+
         if initial in surname_map:
             for surname in surname_map[initial]:
                 variants.append(f"{first_name} {surname}")
                 variants.append(f"{first_name.lower()}{surname.lower()}")  # For email/username searches
                 variants.append(f"@{first_name.lower()}{surname.lower()}")  # Social media handles
-    
+
     # Add social media variations
     base_name = alias.replace('.', '').replace(' ', '').lower()
     variants.extend([
@@ -53,7 +52,7 @@ def expand_alias_variants(alias: str) -> List[str]:
         f"{alias} writer",
         f"{alias} reviewer"
     ])
-    
+
     print(f"🔧 Expanded '{alias}' into {len(variants)} variants")
     return list(set(variants))  # Remove duplicates
 
@@ -63,64 +62,64 @@ def scrape_contact_info(url: str) -> Dict[str, List[str]]:
     """
     try:
         puppeteer_endpoint = secrets.get("PUPPETEER_ENDPOINT", "https://controll-puppeteer.onrender.com/scrape")
-        
+
         response = requests.post(puppeteer_endpoint, json={
             "url": url,
             "waitFor": 2000,
             "extractText": True
         }, timeout=10)
-        
+
         if response.status_code != 200:
             return {"emails": [], "phones": [], "profiles": [], "social_links": []}
-        
+
         data = response.json()
         content = data.get("content", "")
-        
+
         # Extract contact information from scraped content
         import re
-        
+
         discovered = {
             "emails": [],
             "phones": [],
             "profiles": [],
             "social_links": []
         }
-        
+
         # Email extraction
         email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
         emails = re.findall(email_pattern, content, re.IGNORECASE)
         discovered["emails"] = list(set([email.lower() for email in emails]))
-        
+
         # Phone extraction
         phone_patterns = [
             r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b',
             r'\(\d{3}\)\s*\d{3}[-.]?\d{4}',
             r'\b\d{10}\b'
         ]
-        
+
         for pattern in phone_patterns:
             phones = re.findall(pattern, content)
             for phone in phones:
                 clean_phone = re.sub(r'[^\d]', '', phone)
                 if len(clean_phone) == 10:
                     discovered["phones"].append(clean_phone)
-        
+
         discovered["phones"] = list(set(discovered["phones"]))
-        
+
         # Social media links
         social_patterns = [
             r'https?://(?:www\.)?(?:facebook|twitter|instagram|linkedin|youtube)\.com/[^\s<>"\']+',
             r'@[A-Za-z0-9_]+(?:\s|$)',
         ]
-        
+
         for pattern in social_patterns:
             matches = re.findall(pattern, content, re.IGNORECASE)
             discovered["social_links"].extend(matches)
-        
+
         discovered["social_links"] = list(set(discovered["social_links"]))
-        
+
         return discovered
-        
+
     except Exception as e:
         print(f"    ❌ Scraping failed for {url}: {str(e)}")
         return {"emails": [], "phones": [], "profiles": [], "social_links": []}
@@ -143,7 +142,7 @@ def enhanced_mri_scan(target_name: str, phone: str = None, email: str = None) ->
     # Enhanced alias expansion with smart variants
     print("🔧 Phase 0: Smart Alias Expansion...")
     alias_variants = expand_alias_variants(target_name)
-    
+
     # Add intelligent name completions for "Seth D."
     if "seth d" in target_name.lower():
         alias_variants.extend([
@@ -157,16 +156,16 @@ def enhanced_mri_scan(target_name: str, phone: str = None, email: str = None) ->
             "@sethdoria",
             "@sethdaniels"
         ])
-    
+
     print(f"📝 Generated {len(alias_variants)} smart variants")
 
     # Phase 1: Comprehensive SERPER Discovery
     print("🔍 Phase 1: Multi-Platform Discovery...")
     all_search_results = []
-    
+
     # Build comprehensive query set
     search_queries = []
-    
+
     # Core identity searches
     for variant in alias_variants[:8]:  # Top 8 variants
         search_queries.extend([
@@ -184,23 +183,23 @@ def enhanced_mri_scan(target_name: str, phone: str = None, email: str = None) ->
         search_queries.append(f'"{target_name}" site:{platform}')
 
     print(f"🔍 Executing {len(search_queries)} targeted queries...")
-    
+
     for i, query in enumerate(search_queries[:25], 1):  # Increased limit
         print(f"  🔍 Query {i}/25: {query[:50]}...")
-        
+
         try:
             results = query_serper(query, num_results=5)
-            
+
             if not results:
                 continue
-                
+
             all_search_results.extend(results)
-            
+
             # Extract clues from each result
             for result in results:
                 text_content = ""
                 url = ""
-                
+
                 if isinstance(result, dict):
                     text_content = f"{result.get('title', '')} {result.get('snippet', '')}"
                     url = result.get('link', '')
@@ -211,17 +210,17 @@ def enhanced_mri_scan(target_name: str, phone: str = None, email: str = None) ->
                     url_pattern = r'https?://[^\s<>"\']+(?:[^\s<>"\'.,;!?])'
                     urls = re.findall(url_pattern, result)
                     url = urls[0] if urls else ""
-                
+
                 # Extract contact information from text
                 import re
-                
+
                 # Email extraction
                 email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
                 emails = re.findall(email_pattern, text_content)
                 for found_email in emails:
                     discovered_data["emails"].add(found_email.lower())
                     print(f"    📧 Email found: {found_email}")
-                
+
                 # Phone extraction
                 phone_pattern = r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'
                 phones = re.findall(phone_pattern, text_content)
@@ -230,7 +229,7 @@ def enhanced_mri_scan(target_name: str, phone: str = None, email: str = None) ->
                     if len(clean_phone) == 10:
                         discovered_data["phones"].add(clean_phone)
                         print(f"    📞 Phone found: {found_phone}")
-                
+
                 # Profile URL detection
                 if url and is_mri_target_url(url):
                     if is_profile_link(url):
@@ -240,11 +239,11 @@ def enhanced_mri_scan(target_name: str, phone: str = None, email: str = None) ->
                             "source_query": query
                         })
                         print(f"    👤 Profile found: {url}")
-                    
+
                     # Add to clue queue for potential scraping
                     if url not in clue_queue:
                         clue_queue.append(url)
-                        
+
         except Exception as e:
             print(f"    ❌ Query failed: {str(e)}")
             continue
@@ -253,44 +252,44 @@ def enhanced_mri_scan(target_name: str, phone: str = None, email: str = None) ->
 
     # Phase 2: URL Scraping & Deep Content Analysis
     print("\n🕷️ Phase 2: URL Scraping & Deep Content Analysis...")
-    
+
     # Scrape the most promising URLs from clue queue
     scraped_urls = 0
     max_scrapes = 8  # Limit to prevent timeout
-    
+
     for url in clue_queue[:max_scrapes]:
         if is_mri_target_url(url):
             print(f"    🕷️ Scraping: {url}")
             scraped_data = scrape_contact_info(url)
             scraped_urls += 1
-            
+
             # Merge scraped data
             for email in scraped_data.get("emails", []):
                 discovered_data["emails"].add(email)
                 print(f"      📧 Scraped email: {email}")
-            
+
             for phone in scraped_data.get("phones", []):
                 discovered_data["phones"].add(phone)
                 print(f"      📞 Scraped phone: {phone}")
-            
+
             for social in scraped_data.get("social_links", []):
                 discovered_data["social_links"].append(social)
                 print(f"      🔗 Scraped social: {social}")
-    
+
     print(f"    ✅ Scraped {scraped_urls} URLs successfully")
 
     # Phase 3: Identity Clue Analysis
     print("\n🔍 Phase 3: Identity Clue Analysis...")
-    
+
     # Look for identity patterns in collected data
     combined_text = " ".join([str(r) for r in all_search_results])
-    
+
     # Extract potential full names
     name_patterns = [
         r'Seth\s+([A-Z][a-z]+)',  # "Seth Lastname"
         r'([A-Z][a-z]+)\s+([A-Z][a-z]+)',  # "First Last" patterns
     ]
-    
+
     for pattern in name_patterns:
         matches = re.findall(pattern, combined_text, re.IGNORECASE)
         for match in matches:
@@ -298,7 +297,7 @@ def enhanced_mri_scan(target_name: str, phone: str = None, email: str = None) ->
                 full_name = " ".join(match)
             else:
                 full_name = f"Seth {match}" if "seth" not in match.lower() else match
-            
+
             if len(full_name.split()) >= 2 and full_name not in [target_name]:
                 print(f"    🎯 Potential identity: {full_name}")
 
