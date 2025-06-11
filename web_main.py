@@ -48,12 +48,11 @@ def alias_tools():
         review_text = request.form.get('review_text')
 
         try:
+            print(f"👁️ MRI Triggered for alias: {handle}")
             mri_results = enhanced_mri_scan(
-                alias=handle,
-                location=location,
-                platform=platform,
-                review=review_text,
-                verbose=True
+                target_name=handle,
+                phone=None,
+                email=None
             )
         except Exception as e:
             mri_results = {
@@ -61,7 +60,7 @@ def alias_tools():
                 'trace': traceback.format_exc()
             }
 
-        print("\ud83d\udd0c MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
+        print("🔌 MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
         return render_template('alias_tools.html', results=mri_results)
 
     return render_template('alias_tools.html')
@@ -93,3 +92,6 @@ def guest_search():
     except Exception as e:
         return render_template('guest_tools.html',
                                result={'error': str(e), 'trace': traceback.format_exc()})
+
+if __name__ == '__main__':
+    app.run(host='0.0.0.0', port=5000, debug=True)
