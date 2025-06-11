@@ -3111,155 +3111,82 @@ def scrape_contact_info(url, verbose=False):
     Enhanced contact info scraping using Puppeteer + Cheerio via Render endpoint
     Returns structured contact information extracted from the page
     """
-    print(f"🌐 Scraping contact info from: {url[:50]}...")
-    
-    clues = {
-        "emails": [],
-        "phones": [],
-        "profiles": [],
-        "review_platforms": [],
-        "social_links": [],
-        "html": ""
-    }
-
     try:
-        # Use enhanced Puppeteer + Cheerio scraper on Render
         scraper_url = "https://controll-scraper.onrender.com/scrape"
-        
         response = requests.post(scraper_url, json={"url": url}, timeout=10)
-        
-        if response.status_code != 200:
-            print(f"❌ Enhanced scraping failed with status {response.status_code}")
-            # Fallback to original Puppeteer endpoint
-            fallback_endpoint = secrets.get("PUPPETEER_ENDPOINT", "https://controll-puppeteer.onrender.com/scrape")
-            response = requests.post(fallback_endpoint, json={
-                "url": url,
-                "waitFor": 2000,
-                "extractText": True
-            }, timeout=15)
-            
-            if response.status_code != 200:
-                print(f"❌ Fallback scraping also failed with status {response.status_code}")
-                return clues
-            
-            data = response.json()
-            raw_html = data.get("content", "")
-        else:
-            # Enhanced scraper response
-            data = response.json()
-            raw_html = data.get("html", "")
+
+        if response.status_code == 200:
+            html = response.json().get("html", "")
+            if verbose:
+                print(f"🧠 Scraped HTML from {url}:\n", html[:1000])
+
+            # Extract emails and phones
+            emails = re.findall(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", html)
+            phones = re.findall(r"\(?\b[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b", html)
+
+            # Detect review platform URLs
+            review_platforms = []
+            known_review_sites = [
+                "yelp.com", "tripadvisor.com", "zomato.com", "trustpilot.com",
+                "opentable.com", "booking.com", "glassdoor.com"
+            ]
+            for site in known_review_sites:
+                if site in html:
+                    review_platforms.append(site)
+
+            # Detect social media links
+            social_links = []
+            known_social_sites = [
+                "facebook.com", "linkedin.com", "twitter.com", "instagram.com",
+                "tiktok.com", "threads.net", "youtube.com"
+            ]
+            for site in known_social_sites:
+                if site in html:
+                    social_links.append(site)
+
+            # Clean and filter results
+            clean_emails = []
+            for email in emails:
+                email = email.lower().strip()
+                if "@" in email and "." in email.split("@")[1]:
+                    if not filter_junk_identity(email=email):
+                        clean_emails.append(email)
+                    elif verbose:
+                        print(f"🚫 Filtered junk email: {email}")
+
+            clean_phones = []
+            for phone in phones:
+                clean_phone = re.sub(r'[^\d]', '', str(phone))
+                if len(clean_phone) >= 10:
+                    if not filter_junk_identity(phone=clean_phone):
+                        clean_phones.append(clean_phone)
+                    elif verbose:
+                        print(f"🚫 Filtered junk phone: {clean_phone}")
+
+            result = {
+                "emails": list(set(clean_emails)),
+                "phones": list(set(clean_phones)),
+                "review_platforms": review_platforms,
+                "social_links": social_links,
+                "html_snippet": html[:1000]  # optional for debugging
+            }
             
             if verbose:
-                print(f"🧠 Scraped HTML from {url}:\n{raw_html[:1000]}...")
-        
-        if not raw_html:
-            print("❌ No HTML content received from scraper")
-            return clues
-
-        clues["html"] = raw_html
-
-        # Enhanced email extraction with multiple patterns
-        email_patterns = [
-            r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+",
-            r"mailto:([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)",
-            r"email[:\s]*([a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+)"
-        ]
-        
-        all_emails = []
-        for pattern in email_patterns:
-            matches = re.findall(pattern, raw_html, re.IGNORECASE)
-            all_emails.extend(matches)
-        
-        # Enhanced phone extraction with multiple patterns
-        phone_patterns = [
-            r"(?:(?:\+?1\s*(?:[.-]\s*)?)?(?:\(?\d{3}\)?|\d{3})(?:\s*[.-]\s*)?)?\d{3}(?:\s*[.-]\s*)?\d{4}",
-            r"\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}",
-            r"tel:([+]?[\d\s\-\(\)\.]{10,})",
-            r"phone[:\s]*([+]?[\d\s\-\(\)\.]{10,})"
-        ]
-        
-        all_phones = []
-        for pattern in phone_patterns:
-            matches = re.findall(pattern, raw_html, re.IGNORECASE)
-            all_phones.extend(matches)
-        
-        # Enhanced social media link extraction
-        social_patterns = [
-            r"https?://(?:www\.)?(?:linkedin|twitter|instagram|facebook|tiktok|youtube|reddit)\.com/[^\"\' <>\n]+",
-            r"@[A-Za-z0-9_]+(?:\s|$|[^A-Za-z0-9_])",
-            r"(?:linkedin|twitter|instagram|facebook)\.com/[^\s<>\"\']+",
-            r"social[:\s]*(?:https?://)?(?:www\.)?(?:linkedin|twitter|instagram|facebook)\.com/[^\s<>\"\']+",
-        ]
-        
-        all_social = []
-        for pattern in social_patterns:
-            matches = re.findall(pattern, raw_html, re.IGNORECASE)
-            all_social.extend(matches)
-        
-        # Clean and filter emails
-        clean_emails = []
-        for email in all_emails:
-            if isinstance(email, tuple):
-                email = email[0] if email[0] else email[1]
-            email = email.lower().strip()
-            if "@" in email and "." in email.split("@")[1]:
-                if not filter_junk_identity(email=email):
-                    clean_emails.append(email)
-                elif verbose:
-                    print(f"🚫 Filtered junk email: {email}")
-        
-        clues["emails"] = list(set(clean_emails))
-        
-        # Clean and filter phone numbers
-        clean_phones = []
-        for phone in all_phones:
-            if isinstance(phone, tuple):
-                phone = phone[0] if phone[0] else phone[1]
-            clean_phone = re.sub(r'[^\d]', '', str(phone))
-            if len(clean_phone) >= 10:
-                if not filter_junk_identity(phone=clean_phone):
-                    clean_phones.append(clean_phone)
-                elif verbose:
-                    print(f"🚫 Filtered junk phone: {clean_phone}")
-        
-        clues["phones"] = list(set(clean_phones))
-        
-        # Clean and filter social links
-        clean_social = []
-        for social in all_social:
-            if isinstance(social, tuple):
-                social = social[0] if social[0] else social[1]
-            social = social.strip()
-            if len(social) > 5:  # Minimum length check
-                clean_social.append(social)
-        
-        clues["social_links"] = list(set(clean_social))
-        
-        # Extract profile and review platform links
-        profile_indicators = ["user_details", "/profile", "/member", "/user/", "/contrib"]
-        review_platforms = ["yelp.com", "tripadvisor.com", "google.com/maps", "trustpilot.com"]
-        
-        for social in clues["social_links"]:
-            if any(indicator in social.lower() for indicator in profile_indicators):
-                clues["profiles"].append(social)
-            if any(platform in social.lower() for platform in review_platforms):
-                clues["review_platforms"].append(social)
-        
-        print(f"✅ Enhanced scraping complete: {len(clues['emails'])} emails, {len(clues['phones'])} phones, {len(clues['social_links'])} social links")
-        
-        if verbose:
-            if clues["emails"]:
-                print(f"   📧 Emails: {clues['emails']}")
-            if clues["phones"]:
-                print(f"   📞 Phones: {clues['phones']}")
-            if clues["social_links"]:
-                print(f"   🔗 Social: {clues['social_links'][:3]}")
-        
-        return clues
-        
+                print(f"✅ Contact extraction complete: {len(result['emails'])} emails, {len(result['phones'])} phones")
+                if result["emails"]:
+                    print(f"   📧 Emails: {result['emails']}")
+                if result["phones"]:
+                    print(f"   📞 Phones: {result['phones']}")
+                if review_platforms:
+                    print(f"   📝 Review platforms: {review_platforms}")
+                if social_links:
+                    print(f"   📱 Social links: {social_links}")
+            
+            return result
+        else:
+            return {"error": f"Failed to scrape: {response.status_code}"}
     except Exception as e:
-        print(f"❌ Enhanced scraping error for {url}: {e}")
-        return clues
+        return {"error": str(e)}
 
 def check_phone_penetration(phone_number):
     """Search for phone number across known review/social platforms using query_serper()."""
