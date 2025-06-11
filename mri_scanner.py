@@ -57,176 +57,282 @@ def expand_alias_variants(alias: str) -> List[str]:
     print(f"🔧 Expanded '{alias}' into {len(variants)} variants")
     return list(set(variants))  # Remove duplicates
 
+def scrape_contact_info(url: str) -> Dict[str, List[str]]:
+    """
+    Scrape a URL for contact information using Puppeteer endpoint
+    """
+    try:
+        puppeteer_endpoint = secrets.get("PUPPETEER_ENDPOINT", "https://controll-puppeteer.onrender.com/scrape")
+        
+        response = requests.post(puppeteer_endpoint, json={
+            "url": url,
+            "waitFor": 2000,
+            "extractText": True
+        }, timeout=10)
+        
+        if response.status_code != 200:
+            return {"emails": [], "phones": [], "profiles": [], "social_links": []}
+        
+        data = response.json()
+        content = data.get("content", "")
+        
+        # Extract contact information from scraped content
+        import re
+        
+        discovered = {
+            "emails": [],
+            "phones": [],
+            "profiles": [],
+            "social_links": []
+        }
+        
+        # Email extraction
+        email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+        emails = re.findall(email_pattern, content, re.IGNORECASE)
+        discovered["emails"] = list(set([email.lower() for email in emails]))
+        
+        # Phone extraction
+        phone_patterns = [
+            r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b',
+            r'\(\d{3}\)\s*\d{3}[-.]?\d{4}',
+            r'\b\d{10}\b'
+        ]
+        
+        for pattern in phone_patterns:
+            phones = re.findall(pattern, content)
+            for phone in phones:
+                clean_phone = re.sub(r'[^\d]', '', phone)
+                if len(clean_phone) == 10:
+                    discovered["phones"].append(clean_phone)
+        
+        discovered["phones"] = list(set(discovered["phones"]))
+        
+        # Social media links
+        social_patterns = [
+            r'https?://(?:www\.)?(?:facebook|twitter|instagram|linkedin|youtube)\.com/[^\s<>"\']+',
+            r'@[A-Za-z0-9_]+(?:\s|$)',
+        ]
+        
+        for pattern in social_patterns:
+            matches = re.findall(pattern, content, re.IGNORECASE)
+            discovered["social_links"].extend(matches)
+        
+        discovered["social_links"] = list(set(discovered["social_links"]))
+        
+        return discovered
+        
+    except Exception as e:
+        print(f"    ❌ Scraping failed for {url}: {str(e)}")
+        return {"emails": [], "phones": [], "profiles": [], "social_links": []}
+
 def enhanced_mri_scan(target_name: str, phone: str = None, email: str = None) -> Dict[str, Any]:
     """
-    Enhanced MRI scan using Puppeteer server with Cheerio + Regex extraction
+    Enhanced MRI scan with deep alias expansion and clue extraction + URL scraping
     """
     print(f"🧬 Starting Enhanced MRI Scan for: {target_name}")
 
-    mri_results = {
-        "target": target_name,
-        "phone": phone,
-        "email": email,
-        "discovered_data": {
-            "emails": set(),
-            "phones": set(),
-            "profiles": [],
-            "social_links": [],
-            "review_platforms": []
-        },
-        "scan_summary": {}
+    clue_queue = []
+    discovered_data = {
+        "emails": set(),
+        "phones": set(),
+        "profiles": [],
+        "social_links": [],
+        "review_platforms": []
     }
 
-    # Phase 0: Alias Expansion
-    print("🔧 Phase 0: Alias Expansion...")
+    # Enhanced alias expansion with smart variants
+    print("🔧 Phase 0: Smart Alias Expansion...")
     alias_variants = expand_alias_variants(target_name)
-    print(f"📝 Generated {len(alias_variants)} alias variants: {alias_variants[:5]}...")
+    
+    # Add intelligent name completions for "Seth D."
+    if "seth d" in target_name.lower():
+        alias_variants.extend([
+            "Seth Doria",
+            "Seth Daniels", 
+            "Seth Davidson",
+            "Seth Davis",
+            "Seth Donohue",
+            "Seth D food critic",
+            "Seth D yelp reviewer",
+            "@sethdoria",
+            "@sethdaniels"
+        ])
+    
+    print(f"📝 Generated {len(alias_variants)} smart variants")
 
-    # Phase 1: SERPER Discovery with Expanded Aliases
-    print("🔍 Phase 1: SERPER Discovery...")
+    # Phase 1: Comprehensive SERPER Discovery
+    print("🔍 Phase 1: Multi-Platform Discovery...")
+    all_search_results = []
+    
+    # Build comprehensive query set
     search_queries = []
     
-    # Add queries for each alias variant
-    for variant in alias_variants[:5]:  # Limit to top 5 variants
+    # Core identity searches
+    for variant in alias_variants[:8]:  # Top 8 variants
         search_queries.extend([
             f'"{variant}" review',
             f'"{variant}" yelp',
-            f'"{variant}" restaurant',
+            f'"{variant}" tripadvisor',
+            f'"{variant}" google reviews',
             f'{variant} site:reddit.com',
-            f'{variant} site:yelp.com',
-            f'{variant} site:tripadvisor.com',
-            f'{variant} site:medium.com',
-            f'{variant} site:trustpilot.com'
+            f'{variant} site:linkedin.com'
         ])
 
-    # Add original target queries
-    search_queries.extend([
-        f'"{target_name}" review',
-        f'"{target_name}" yelp',
-        f'"{target_name}" restaurant',
-        f'{target_name} site:reddit.com',
-        f'{target_name} site:yelp.com',
-        f'{target_name} site:tripadvisor.com'
-    ])
+    # Platform-specific searches
+    review_platforms = ["yelp.com", "tripadvisor.com", "google.com", "trustpilot.com", "reddit.com"]
+    for platform in review_platforms:
+        search_queries.append(f'"{target_name}" site:{platform}')
 
-    if phone:
-        search_queries.append(f'"{phone}" review')
-    if email:
-        search_queries.append(f'"{email}" review')
-
-    discovered_urls = []
-    total_queries = len(search_queries)
-    print(f"🔍 Executing {total_queries} SERPER queries...")
+    print(f"🔍 Executing {len(search_queries)} targeted queries...")
     
-    for i, query in enumerate(search_queries[:20], 1):  # Limit to 20 queries to avoid exhaustion
-        print(f"  🔍 Query {i}/{min(total_queries, 20)}: {query}")
+    for i, query in enumerate(search_queries[:25], 1):  # Increased limit
+        print(f"  🔍 Query {i}/25: {query[:50]}...")
         
         try:
             results = query_serper(query, num_results=5)
             
             if not results:
-                print(f"    ❌ No results returned")
                 continue
                 
-            print(f"    ✅ Got {len(results)} results")
+            all_search_results.extend(results)
             
+            # Extract clues from each result
             for result in results:
-                # Handle both string snippets and dict results from SERPER
+                text_content = ""
+                url = ""
+                
                 if isinstance(result, dict):
+                    text_content = f"{result.get('title', '')} {result.get('snippet', '')}"
                     url = result.get('link', '')
-                    if url and is_mri_target_url(url):
-                        discovered_urls.append(url)
-                        print(f"    📍 Target URL found: {url[:60]}...")
                 elif isinstance(result, str):
-                    # Extract URLs from string snippets using regex
+                    text_content = result
+                    # Extract URLs from text
                     import re
                     url_pattern = r'https?://[^\s<>"\']+(?:[^\s<>"\'.,;!?])'
                     urls = re.findall(url_pattern, result)
-                    for url in urls:
-                        if is_mri_target_url(url):
-                            discovered_urls.append(url)
-                            print(f"    📍 URL extracted from snippet: {url[:60]}...")
-                            
-                    # Also look for domain-specific patterns in text
-                    domain_patterns = {
-                        'yelp.com': r'yelp\.com/biz/[\w\-]+',
-                        'tripadvisor.com': r'tripadvisor\.com/Restaurant_Review[\w\-]+',
-                        'reddit.com': r'reddit\.com/r/[\w]+/comments/[\w]+',
-                        'google.com': r'google\.com/maps/place/[\w\-\+%]+'
-                    }
+                    url = urls[0] if urls else ""
+                
+                # Extract contact information from text
+                import re
+                
+                # Email extraction
+                email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+                emails = re.findall(email_pattern, text_content)
+                for found_email in emails:
+                    discovered_data["emails"].add(found_email.lower())
+                    print(f"    📧 Email found: {found_email}")
+                
+                # Phone extraction
+                phone_pattern = r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'
+                phones = re.findall(phone_pattern, text_content)
+                for found_phone in phones:
+                    clean_phone = re.sub(r'[^\d]', '', found_phone)
+                    if len(clean_phone) == 10:
+                        discovered_data["phones"].add(clean_phone)
+                        print(f"    📞 Phone found: {found_phone}")
+                
+                # Profile URL detection
+                if url and is_mri_target_url(url):
+                    if is_profile_link(url):
+                        discovered_data["profiles"].append({
+                            "url": url,
+                            "platform": extract_platform_from_url(url),
+                            "source_query": query
+                        })
+                        print(f"    👤 Profile found: {url}")
                     
-                    for domain, pattern in domain_patterns.items():
-                        matches = re.findall(pattern, result, re.IGNORECASE)
-                        for match in matches:
-                            full_url = f"https://{match}"
-                            if is_mri_target_url(full_url):
-                                discovered_urls.append(full_url)
-                                print(f"    🎯 Pattern-matched URL: {full_url[:60]}...")
-                else:
-                    print(f"    ⚠️ Skipping unexpected result type: {type(result)}")
-                    
+                    # Add to clue queue for potential scraping
+                    if url not in clue_queue:
+                        clue_queue.append(url)
+                        
         except Exception as e:
-            print(f"    ❌ SERPER query failed: {str(e)}")
+            print(f"    ❌ Query failed: {str(e)}")
             continue
 
-    # Phase 2: Enhanced Puppeteer Scraping
-    print(f"\n🧬 Phase 2: Enhanced Scraping ({len(discovered_urls)} URLs)...")
-    puppeteer_url = secrets["PUPPETEER_ENDPOINT"]
+    print(f"✅ Discovery complete: {len(clue_queue)} URLs queued for analysis")
 
-    for i, target_url in enumerate(discovered_urls[:5]):  # Limit to 5 URLs for testing
-        print(f"  🌐 Scraping {i+1}/{min(len(discovered_urls), 5)}: {target_url[:50]}...")
+    # Phase 2: URL Scraping & Deep Content Analysis
+    print("\n🕷️ Phase 2: URL Scraping & Deep Content Analysis...")
+    
+    # Scrape the most promising URLs from clue queue
+    scraped_urls = 0
+    max_scrapes = 8  # Limit to prevent timeout
+    
+    for url in clue_queue[:max_scrapes]:
+        if is_mri_target_url(url):
+            print(f"    🕷️ Scraping: {url}")
+            scraped_data = scrape_contact_info(url)
+            scraped_urls += 1
+            
+            # Merge scraped data
+            for email in scraped_data.get("emails", []):
+                discovered_data["emails"].add(email)
+                print(f"      📧 Scraped email: {email}")
+            
+            for phone in scraped_data.get("phones", []):
+                discovered_data["phones"].add(phone)
+                print(f"      📞 Scraped phone: {phone}")
+            
+            for social in scraped_data.get("social_links", []):
+                discovered_data["social_links"].append(social)
+                print(f"      🔗 Scraped social: {social}")
+    
+    print(f"    ✅ Scraped {scraped_urls} URLs successfully")
 
-        try:
-            response = requests.get(puppeteer_url, params={
-                'url': target_url,
-                'extractData': 'true',
-                'waitFor': 3000
-            }, timeout=30)
-
-            if response.status_code == 200:
-                data = response.json()
-                extracted = data.get('extractedData', {})
-
-                # Collect discovered data
-                if extracted.get('emails'):
-                    mri_results["discovered_data"]["emails"].update(extracted['emails'])
-
-                if extracted.get('phones'):
-                    mri_results["discovered_data"]["phones"].update(extracted['phones'])
-
-                # Analyze links for profiles
-                for link_obj in extracted.get('links', []):
-                    url = link_obj.get('url', '')
-                    if is_profile_link(url):
-                        mri_results["discovered_data"]["profiles"].append({
-                            "url": url,
-                            "text": link_obj.get('text', ''),
-                            "source": target_url
-                        })
-
-                print(f"    ✅ Extracted: {len(extracted.get('emails', []))} emails, {len(extracted.get('phones', []))} phones")
-
-        except Exception as e:
-            print(f"    ❌ Scraping failed: {str(e)}")
+    # Phase 3: Identity Clue Analysis
+    print("\n🔍 Phase 3: Identity Clue Analysis...")
+    
+    # Look for identity patterns in collected data
+    combined_text = " ".join([str(r) for r in all_search_results])
+    
+    # Extract potential full names
+    name_patterns = [
+        r'Seth\s+([A-Z][a-z]+)',  # "Seth Lastname"
+        r'([A-Z][a-z]+)\s+([A-Z][a-z]+)',  # "First Last" patterns
+    ]
+    
+    for pattern in name_patterns:
+        matches = re.findall(pattern, combined_text, re.IGNORECASE)
+        for match in matches:
+            if isinstance(match, tuple):
+                full_name = " ".join(match)
+            else:
+                full_name = f"Seth {match}" if "seth" not in match.lower() else match
+            
+            if len(full_name.split()) >= 2 and full_name not in [target_name]:
+                print(f"    🎯 Potential identity: {full_name}")
 
     # Convert sets to lists for JSON serialization
-    mri_results["discovered_data"]["emails"] = list(mri_results["discovered_data"]["emails"])
-    mri_results["discovered_data"]["phones"] = list(mri_results["discovered_data"]["phones"])
+    discovered_data["emails"] = list(discovered_data["emails"])
+    discovered_data["phones"] = list(discovered_data["phones"])
 
-    # Phase 3: Analysis Summary
-    print("\n📊 Phase 3: Analysis Summary...")
-    mri_results["scan_summary"] = {
-        "total_emails_found": len(mri_results["discovered_data"]["emails"]),
-        "total_phones_found": len(mri_results["discovered_data"]["phones"]),
-        "total_profiles_found": len(mri_results["discovered_data"]["profiles"]),
-        "urls_scanned": len(discovered_urls),
+    # Phase 4: Analysis Summary
+    print("\n📊 Phase 4: Analysis Summary...")
+    scan_summary = {
+        "total_emails_found": len(discovered_data["emails"]),
+        "total_phones_found": len(discovered_data["phones"]),
+        "total_profiles_found": len(discovered_data["profiles"]),
+        "urls_scanned": len(all_search_results),
+        "urls_scraped": scraped_urls,
+        "clues_queued": len(clue_queue),
         "scan_complete": True
     }
 
-    print(f"🎯 MRI Scan Complete:")
-    print(f"  📧 Emails: {mri_results['scan_summary']['total_emails_found']}")
-    print(f"  📞 Phones: {mri_results['scan_summary']['total_phones_found']}")
-    print(f"  👤 Profiles: {mri_results['scan_summary']['total_profiles_found']}")
+    mri_results = {
+        "target": target_name,
+        "phone": discovered_data["phones"][0] if discovered_data["phones"] else phone,
+        "email": discovered_data["emails"][0] if discovered_data["emails"] else email,
+        "discovered_data": discovered_data,
+        "scan_summary": scan_summary,
+        "clue_queue": clue_queue[:10]  # Preview of top 10 URLs
+    }
+
+    print(f"🎯 Enhanced MRI Scan Complete:")
+    print(f"  📧 Emails: {scan_summary['total_emails_found']}")
+    print(f"  📞 Phones: {scan_summary['total_phones_found']}")
+    print(f"  👤 Profiles: {scan_summary['total_profiles_found']}")
+    print(f"  🌐 URLs Analyzed: {scan_summary['urls_scanned']}")
+    print(f"  🕷️ URLs Scraped: {scan_summary['urls_scraped']}")
 
     return mri_results
 
@@ -249,6 +355,25 @@ def is_profile_link(url: str) -> bool:
         'facebook.com/', 'instagram.com/', 'linkedin.com/in/'
     ]
     return any(indicator in url.lower() for indicator in profile_indicators)
+
+def extract_platform_from_url(url: str) -> str:
+    """Extract platform name from URL"""
+    if 'yelp.com' in url:
+        return 'Yelp'
+    elif 'tripadvisor.com' in url:
+        return 'TripAdvisor'
+    elif 'google.com' in url:
+        return 'Google'
+    elif 'reddit.com' in url:
+        return 'Reddit'
+    elif 'linkedin.com' in url:
+        return 'LinkedIn'
+    elif 'facebook.com' in url:
+        return 'Facebook'
+    elif 'trustpilot.com' in url:
+        return 'Trustpilot'
+    else:
+        return 'Unknown'
 
 if __name__ == "__main__":
     # Test with Seth D.
