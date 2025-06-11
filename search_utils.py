@@ -3106,6 +3106,72 @@ def purge_duplicate_aliases():
     
     return len(data) - len(normalized)  # Return number of duplicates removed
 
+def scrape_contact_info(url):
+    """
+    Scrape contact information from a URL using Puppeteer endpoint
+    Returns emails, phones, and social links found on the page
+    """
+    print(f"🌐 Scraping contact info from: {url[:50]}...")
+    
+    clues = {
+        "emails": [],
+        "phones": [],
+        "profiles": [],
+        "review_platforms": [],
+        "social_links": []
+    }
+
+    try:
+        # Use existing Puppeteer endpoint from secrets
+        puppeteer_endpoint = secrets.get("PUPPETEER_ENDPOINT", "https://controll-puppeteer.onrender.com/scrape")
+        
+        response = requests.post(puppeteer_endpoint, json={
+            "url": url,
+            "waitFor": 2000,
+            "extractText": True
+        }, timeout=15)
+        
+        if response.status_code != 200:
+            print(f"❌ Puppeteer scraping failed with status {response.status_code}")
+            return clues
+        
+        data = response.json()
+        raw_html = data.get("content", "")
+        
+        if not raw_html:
+            print("❌ No content received from Puppeteer")
+            return clues
+
+        # Extract emails using regex
+        email_matches = re.findall(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", raw_html)
+        
+        # Extract phone numbers using regex
+        phone_matches = re.findall(r"(?:(?:\+?1\s*(?:[.-]\s*)?)?(?:\(?\d{3}\)?|\d{3})(?:\s*[.-]\s*)?)?\d{3}(?:\s*[.-]\s*)?\d{4}", raw_html)
+        
+        # Extract social media links
+        social_matches = re.findall(r"https?://(?:www\.)?(?:linkedin|twitter|instagram|facebook|tiktok|youtube)\.com/[^\"\' <>\n]+", raw_html)
+        
+        # Clean and filter results
+        clues["emails"] = list(set([email.lower() for email in email_matches if not filter_junk_identity(email=email.lower())]))
+        
+        # Clean phone numbers and filter junk
+        clean_phones = []
+        for phone in phone_matches:
+            clean_phone = re.sub(r'[^\d]', '', phone)
+            if len(clean_phone) >= 10 and not filter_junk_identity(phone=clean_phone):
+                clean_phones.append(clean_phone)
+        clues["phones"] = list(set(clean_phones))
+        
+        clues["social_links"] = list(set(social_matches))
+        
+        print(f"✅ Scraped: {len(clues['emails'])} emails, {len(clues['phones'])} phones, {len(clues['social_links'])} social links")
+        
+        return clues
+        
+    except Exception as e:
+        print(f"❌ Scraping error for {url}: {e}")
+        return clues
+
 def check_phone_penetration(phone_number):
     """Search for phone number across known review/social platforms using query_serper()."""
     platforms = [
