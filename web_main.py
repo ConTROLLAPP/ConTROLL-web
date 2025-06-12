@@ -59,7 +59,7 @@ def alias_tools():
                     extracted_phone = phone_matches[0]
             
             # Run enhanced MRI scan with full parameters like main.py
-            mri_results = enhanced_mri_scan(handle, phone=extracted_phone)
+            mri_results = enhanced_mri_scan(alias=handle)
             
             print(f"\n🧬 MRI Scan Results for {handle}:")
             print(f"📧 Emails discovered: {len(mri_results['discovered_data']['emails'])}")
