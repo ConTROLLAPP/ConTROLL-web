@@ -866,12 +866,65 @@ def extract_clue_phrases(text):
 
 def scrape_contact_info(url):
     """Enhanced scraping for contact information from people search sites"""
+    print(f"🕷️ [scrape_contact_info] Starting scrape attempt for: {url}")
+    
     import requests
     import re
 
-    contact_info = {"email": None, "phone": None, "address": None, "age": None, "relatives": []}
+    contact_info = {"emails": [], "phones": [], "social_links": [], "review_platforms": []}
 
     try:
+        # Check if we can import the cheerio scraper
+        try:
+            from cheerio_scraper import run_cheerio_scrape
+            print(f"✅ [scrape_contact_info] Successfully imported cheerio_scraper")
+        except ImportError as import_error:
+            print(f"❌ [scrape_contact_info] Failed to import cheerio_scraper: {import_error}")
+            return contact_info
+
+        # Try using the Puppeteer endpoint first
+        print(f"🚀 [scrape_contact_info] Attempting Puppeteer scrape for: {url}")
+        
+        try:
+            puppeteer_endpoint = secrets.get("PUPPETEER_ENDPOINT", "https://controll-puppeteer.onrender.com/scrape")
+            print(f"🔗 [scrape_contact_info] Using Puppeteer endpoint: {puppeteer_endpoint}")
+            
+            response = requests.get(puppeteer_endpoint, params={"url": url}, timeout=15)
+            print(f"📡 [scrape_contact_info] Puppeteer response status: {response.status_code}")
+            
+            if response.status_code == 200:
+                try:
+                    data = response.json()
+                    print(f"✅ [scrape_contact_info] Puppeteer returned JSON data")
+                    
+                    extracted_data = data.get("extractedData", {})
+                    if extracted_data:
+                        contact_info["emails"] = extracted_data.get("emails", [])
+                        contact_info["phones"] = extracted_data.get("phones", [])
+                        
+                        print(f"📧 [scrape_contact_info] Emails found: {len(contact_info['emails'])}")
+                        print(f"📞 [scrape_contact_info] Phones found: {len(contact_info['phones'])}")
+                        
+                        if contact_info["emails"] or contact_info["phones"]:
+                            print(f"🎯 [scrape_contact_info] Successfully extracted data from Puppeteer")
+                            return contact_info
+                        else:
+                            print(f"⚠️ [scrape_contact_info] Puppeteer returned empty data")
+                    else:
+                        print(f"⚠️ [scrape_contact_info] No extractedData in Puppeteer response")
+                        
+                except json.JSONDecodeError as json_error:
+                    print(f"❌ [scrape_contact_info] Failed to parse Puppeteer JSON: {json_error}")
+                    
+            else:
+                print(f"❌ [scrape_contact_info] Puppeteer endpoint failed with status: {response.status_code}")
+                
+        except Exception as puppeteer_error:
+            print(f"❌ [scrape_contact_info] Puppeteer scraping failed: {puppeteer_error}")
+        
+        # Fallback to direct HTTP scraping
+        print(f"🔄 [scrape_contact_info] Falling back to direct HTTP scraping")
+        
         headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -880,8 +933,11 @@ def scrape_contact_info(url):
             'Connection': 'keep-alive',
         }
 
-        print(f"🌐 Enhanced scraping from: {url[:50]}...")
+        print(f"🌐 [scrape_contact_info] Direct HTTP request to: {url[:50]}...")
         response = requests.get(url, headers=headers, timeout=15)
+        print(f"📡 [scrape_contact_info] HTTP response status: {response.status_code}")
+        print(f"📄 [scrape_contact_info] Content length: {len(response.text)} characters")
+        
         content = response.text.lower()
 
         # Enhanced email extraction patterns
@@ -893,19 +949,25 @@ def scrape_contact_info(url):
             r'data-email="([^"]+@[^"]+)"'
         ]
 
-        for pattern in email_patterns:
+        print(f"📧 [scrape_contact_info] Searching for emails with {len(email_patterns)} patterns...")
+        emails_found = []
+        
+        for i, pattern in enumerate(email_patterns, 1):
             email_matches = re.findall(pattern, content, re.IGNORECASE)
+            print(f"📧 [scrape_contact_info] Pattern {i}: Found {len(email_matches)} email matches")
+            
             if email_matches:
-                email = email_matches[0] if isinstance(email_matches[0], str) else email_matches[0]
-                if '@' in email and '.' in email.split('@')[1]:
-                    # Apply junk filtering before storing
-                    if not filter_junk_identity(email=email, verbose=True):
-                        contact_info["email"] = email
-                        print(f"📧 Email found: {email}")
-                        break
-                    else:
-                        print(f"🚫 Junk email filtered: {email}")
-                        continue
+                for match in email_matches:
+                    email = match if isinstance(match, str) else match[0] if isinstance(match, tuple) else str(match)
+                    if '@' in email and '.' in email.split('@')[1]:
+                        # Apply junk filtering before storing
+                        if not filter_junk_identity(email=email, verbose=True):
+                            emails_found.append(email)
+                            print(f"📧 [scrape_contact_info] Valid email found: {email}")
+                        else:
+                            print(f"🚫 [scrape_contact_info] Junk email filtered: {email}")
+        
+        contact_info["emails"] = list(set(emails_found))  # Remove duplicates
 
         # Enhanced phone extraction patterns
         phone_patterns = [
@@ -917,21 +979,27 @@ def scrape_contact_info(url):
             r'tel:([+]?[\d\s\-\(\)\.]{10,})'
         ]
 
-        for pattern in phone_patterns:
+        print(f"📞 [scrape_contact_info] Searching for phones with {len(phone_patterns)} patterns...")
+        phones_found = []
+        
+        for i, pattern in enumerate(phone_patterns, 1):
             phone_matches = re.findall(pattern, content, re.IGNORECASE)
+            print(f"📞 [scrape_contact_info] Pattern {i}: Found {len(phone_matches)} phone matches")
+            
             if phone_matches:
-                phone = phone_matches[0] if isinstance(phone_matches[0], str) else phone_matches[0]
-                # Clean and validate phone number
-                clean_phone = re.sub(r'[^\d+]', '', phone)
-                if len(clean_phone) >= 10:
-                    # Apply junk filtering before storing
-                    if not filter_junk_identity(phone=clean_phone, verbose=True):
-                        contact_info["phone"] = phone
-                        print(f"📞 Phone found: {phone}")
-                        break
-                    else:
-                        print(f"🚫 Junk phone filtered: {phone}")
-                        continue
+                for match in phone_matches:
+                    phone = match if isinstance(match, str) else match[0] if isinstance(match, tuple) else str(match)
+                    # Clean and validate phone number
+                    clean_phone = re.sub(r'[^\d+]', '', phone)
+                    if len(clean_phone) >= 10:
+                        # Apply junk filtering before storing
+                        if not filter_junk_identity(phone=clean_phone, verbose=True):
+                            phones_found.append(phone)
+                            print(f"📞 [scrape_contact_info] Valid phone found: {phone}")
+                        else:
+                            print(f"🚫 [scrape_contact_info] Junk phone filtered: {phone}")
+        
+        contact_info["phones"] = list(set(phones_found))  # Remove duplicates
 
         # Extract additional metadata for people search
         # Address patterns
@@ -978,11 +1046,24 @@ def scrape_contact_info(url):
             contact_info["relatives"] = relatives[:5]  # Limit to 5 relatives
             print(f"👨‍👩‍👧‍👦 Relatives found: {', '.join(relatives[:3])}")
 
+        # Final summary
+        total_found = len(contact_info.get("emails", [])) + len(contact_info.get("phones", []))
+        print(f"🎯 [scrape_contact_info] Scraping complete for {url}")
+        print(f"📊 [scrape_contact_info] Total items found: {total_found}")
+        print(f"   📧 Emails: {len(contact_info.get('emails', []))}")
+        print(f"   📞 Phones: {len(contact_info.get('phones', []))}")
+        
+        if total_found > 0:
+            print(f"✅ [scrape_contact_info] Successfully extracted data from: {url}")
+        else:
+            print(f"⚠️ [scrape_contact_info] No contact data found in: {url}")
+        
         return contact_info
 
     except Exception as e:
-        print(f"❌ Enhanced scraping error: {e}")
-        return contact_info
+        print(f"❌ [scrape_contact_info] Exception during scraping {url}: {e}")
+        print(f"❌ [scrape_contact_info] Exception type: {type(e).__name__}")
+        return {"emails": [], "phones": [], "social_links": [], "review_platforms": []}
 
 # 🧠 DO NOT DELETE — Stylometry Analysis Trigger
 def run_stylometry_analysis(name, email=None, phone=None):
