@@ -58,14 +58,28 @@ def alias_tools():
                 if phone_matches:
                     extracted_phone = phone_matches[0]
             
-            # Run enhanced MRI scan with full parameters like main.py
-            mri_results = enhanced_mri_scan(alias=handle)
+            # PATCH START — Force logging before and after MRI call
+            print("📡 Starting enhanced MRI scan...")
+            print(f"📊 Input parameters: handle='{handle}', location='{location}', platform='{platform}'")
+            
+            try:
+                mri_results = enhanced_mri_scan(alias=handle)
+                print("✅ MRI scan completed without errors")
+            except Exception as e:
+                print(f"❌ MRI scan exception: {e}")
+                mri_results = {
+                    'error': str(e),
+                    'trace': traceback.format_exc()
+                }
+            
+            print("🔬 MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
+            # PATCH END
             
             print(f"\n🧬 MRI Scan Results for {handle}:")
-            print(f"📧 Emails discovered: {len(mri_results['discovered_data']['emails'])}")
-            print(f"📞 Phones discovered: {len(mri_results['discovered_data']['phones'])}")
-            print(f"👤 Profiles discovered: {len(mri_results['discovered_data']['profiles'])}")
-            print(f"🌐 URLs scanned: {mri_results['scan_summary']['urls_scanned']}")
+            print(f"📧 Emails discovered: {len(mri_results.get('discovered_data', {}).get('emails', []))}")
+            print(f"📞 Phones discovered: {len(mri_results.get('discovered_data', {}).get('phones', []))}")
+            print(f"👤 Profiles discovered: {len(mri_results.get('discovered_data', {}).get('profiles', []))}")
+            print(f"🌐 URLs scanned: {mri_results.get('scan_summary', {}).get('urls_scanned', 0)}")
             
         except Exception as e:
             print(f"❌ MRI scan failed: {e}")
