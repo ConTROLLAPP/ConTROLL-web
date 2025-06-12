@@ -92,7 +92,11 @@ def enhanced_email_search(name, phone):
 # === END PATCH ===
 
 # 🚫 DO NOT DELETE — Identity Junk Filter List
-JUNK_EMAILS = {"f@faisalman.com", "jsmith@gmail.com", "test@test.com", "example@example.com", "noreply@noreply.com"}
+JUNK_EMAILS = {
+    "f@faisalman.com", "jsmith@gmail.com", "test@test.com", "example@example.com", "noreply@noreply.com",
+    "info@rl-legal.com", "contact@rl-legal.com", "info@gmail.com", "contact@gmail.com",
+    "support@", "admin@", "webmaster@", "info@", "contact@", "sales@", "marketing@"
+}
 JUNK_PHONES = {"3333333333", "202-555-3456", "1666666667", "5555555555", "1234567890", "0000000000"}
 JUNK_ADDRESSES = {
     "82 beaver st", 
@@ -310,16 +314,32 @@ def filter_junk_identity(email=None, phone=None, alias=None, verbose=False):
     Filter out placeholder, fake, or junk identity artifacts
     Returns True if identity appears to be junk, False if legitimate
     """
-    if email and email.lower() in JUNK_EMAILS:
-        if verbose:
-            print(f"⚠️ Junk email detected: {email}")
-        # Log the skipped identity
-        try:
-            with open("junk_id_log.txt", "a") as log:
-                log.write(f"Skipped junk email match: {alias}, {email}\n")
-        except:
-            pass
-        return True
+    if email:
+        email_lower = email.lower()
+        # Check exact matches
+        if email_lower in JUNK_EMAILS:
+            if verbose:
+                print(f"⚠️ Junk email detected: {email}")
+            # Log the skipped identity
+            try:
+                with open("junk_id_log.txt", "a") as log:
+                    log.write(f"Skipped junk email match: {alias}, {email}\n")
+            except:
+                pass
+            return True
+        
+        # Check for generic business email patterns
+        generic_patterns = ["info@", "contact@", "support@", "admin@", "webmaster@", "sales@", "marketing@"]
+        for pattern in generic_patterns:
+            if email_lower.startswith(pattern):
+                if verbose:
+                    print(f"⚠️ Generic business email detected: {email}")
+                try:
+                    with open("junk_id_log.txt", "a") as log:
+                        log.write(f"Skipped generic email: {alias}, {email}\n")
+                except:
+                    pass
+                return True
 
     if phone and phone in JUNK_PHONES:
         if verbose:
