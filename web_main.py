@@ -49,12 +49,26 @@ def alias_tools():
 
         try:
             print(f"👁️ MRI Triggered for alias: {handle}")
-            mri_results = enhanced_mri_scan(
-                target_name=handle,
-                phone=None,
-                email=None
-            )
+            
+            # Extract phone from review text if possible
+            extracted_phone = None
+            if review_text:
+                import re
+                phone_matches = re.findall(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', review_text)
+                if phone_matches:
+                    extracted_phone = phone_matches[0]
+            
+            # Run enhanced MRI scan with full parameters like main.py
+            mri_results = enhanced_mri_scan(handle, phone=extracted_phone)
+            
+            print(f"\n🧬 MRI Scan Results for {handle}:")
+            print(f"📧 Emails discovered: {len(mri_results['discovered_data']['emails'])}")
+            print(f"📞 Phones discovered: {len(mri_results['discovered_data']['phones'])}")
+            print(f"👤 Profiles discovered: {len(mri_results['discovered_data']['profiles'])}")
+            print(f"🌐 URLs scanned: {mri_results['scan_summary']['urls_scanned']}")
+            
         except Exception as e:
+            print(f"❌ MRI scan failed: {e}")
             mri_results = {
                 'error': str(e),
                 'trace': traceback.format_exc()
