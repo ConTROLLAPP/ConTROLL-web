@@ -252,31 +252,67 @@ def enhanced_mri_scan(target_name: str, phone: str = None, email: str = None) ->
 
     # Phase 2: URL Scraping & Deep Content Analysis
     print("\n🕷️ Phase 2: URL Scraping & Deep Content Analysis...")
+    print(f"🔍 Total URLs in clue queue: {len(clue_queue)}")
 
     # Scrape the most promising URLs from clue queue
     scraped_urls = 0
     max_scrapes = 8  # Limit to prevent timeout
 
-    for url in clue_queue[:max_scrapes]:
-        if is_mri_target_url(url):
-            print(f"    🕷️ Scraping: {url}")
+    print(f"📊 Processing first {max_scrapes} URLs from clue queue...")
+    
+    for i, url in enumerate(clue_queue[:max_scrapes], 1):
+        print(f"\n🧪 [{i}/{min(max_scrapes, len(clue_queue))}] Checking URL: {url}")
+        
+        # Check if URL passes target filter
+        if not is_mri_target_url(url):
+            print(f"⛔️ URL filtered out by is_mri_target_url(): {url}")
+            continue
+            
+        print(f"✅ URL passed target filter, proceeding to scrape...")
+        
+        try:
+            print(f"    🕷️ Calling scrape_contact_info() for: {url}")
             scraped_data = scrape_contact_info(url)
-            scraped_urls += 1
+            
+            if not scraped_data:
+                print(f"⛔️ scrape_contact_info() returned empty/None for: {url}")
+                continue
+                
+            # Check what data was returned
+            emails_found = scraped_data.get("emails", [])
+            phones_found = scraped_data.get("phones", [])
+            social_found = scraped_data.get("social_links", [])
+            
+            print(f"📊 Scrape results for {url}:")
+            print(f"    📧 Emails: {len(emails_found)} found")
+            print(f"    📞 Phones: {len(phones_found)} found") 
+            print(f"    🔗 Social: {len(social_found)} found")
+            
+            if not any([emails_found, phones_found, social_found]):
+                print(f"⚠️ No useful data extracted from: {url}")
+            else:
+                print(f"✅ Successfully scraped data from: {url}")
+                scraped_urls += 1
 
             # Merge scraped data
-            for email in scraped_data.get("emails", []):
+            for email in emails_found:
                 discovered_data["emails"].add(email)
-                print(f"      📧 Scraped email: {email}")
+                print(f"      📧 Added scraped email: {email}")
 
-            for phone in scraped_data.get("phones", []):
+            for phone in phones_found:
                 discovered_data["phones"].add(phone)
-                print(f"      📞 Scraped phone: {phone}")
+                print(f"      📞 Added scraped phone: {phone}")
 
-            for social in scraped_data.get("social_links", []):
+            for social in social_found:
                 discovered_data["social_links"].append(social)
-                print(f"      🔗 Scraped social: {social}")
+                print(f"      🔗 Added scraped social: {social}")
+                
+        except Exception as scrape_error:
+            print(f"❌ Exception during scraping {url}: {scrape_error}")
+            print(f"    Error type: {type(scrape_error).__name__}")
+            continue
 
-    print(f"    ✅ Scraped {scraped_urls} URLs successfully")
+    print(f"\n    ✅ Scraping complete: {scraped_urls} URLs successfully scraped out of {min(max_scrapes, len(clue_queue))} attempted")
 
     # Phase 3: Identity Clue Analysis
     print("\n🔍 Phase 3: Identity Clue Analysis...")
