@@ -124,252 +124,160 @@ def scrape_contact_info(url: str) -> Dict[str, List[str]]:
         print(f"    ❌ Scraping failed for {url}: {str(e)}")
         return {"emails": [], "phones": [], "profiles": [], "social_links": []}
 
-def enhanced_mri_scan(target_name: str, phone: str = None, email: str = None) -> Dict[str, Any]:
+def enhanced_mri_scan(alias, location=None, platform=None, review=None, verbose=False):
     """
-    Enhanced MRI scan with deep alias expansion and clue extraction + URL scraping
+    Enhanced MRI scan with diagnostic logging and flow verification
     """
-    print(f"🧬 Starting Enhanced MRI Scan for: {target_name}")
+    print(f"🔬 Starting Enhanced MRI Scan for: {alias}", flush=True)
 
-    clue_queue = []
     discovered_data = {
-        "emails": set(),
-        "phones": set(),
+        "emails": [],
+        "phones": [],
         "profiles": [],
         "social_links": [],
         "review_platforms": []
     }
 
-    # Enhanced alias expansion with smart variants
-    print("🔧 Phase 0: Smart Alias Expansion...")
-    alias_variants = expand_alias_variants(target_name)
+    clue_queue = []
+    urls_scraped = 0
 
-    # Add intelligent name completions for "Seth D."
-    if "seth d" in target_name.lower():
-        alias_variants.extend([
-            "Seth Doria",
-            "Seth Daniels", 
-            "Seth Davidson",
-            "Seth Davis",
-            "Seth Donohue",
-            "Seth D food critic",
-            "Seth D yelp reviewer",
-            "@sethdoria",
-            "@sethdaniels"
-        ])
+    try:
+        # Import required functions
+        from search_utils import generate_platform_queries, extract_identity_clues
+        
+        queries = generate_platform_queries(alias, location, [])
+        print(f"🧠 Generated {len(queries)} queries", flush=True)
 
-    print(f"📝 Generated {len(alias_variants)} smart variants")
-
-    # Phase 1: Comprehensive SERPER Discovery
-    print("🔍 Phase 1: Multi-Platform Discovery...")
-    all_search_results = []
-
-    # Build comprehensive query set
-    search_queries = []
-
-    # Core identity searches
-    for variant in alias_variants[:8]:  # Top 8 variants
-        search_queries.extend([
-            f'"{variant}" review',
-            f'"{variant}" yelp',
-            f'"{variant}" tripadvisor',
-            f'"{variant}" google reviews',
-            f'{variant} site:reddit.com',
-            f'{variant} site:linkedin.com'
-        ])
-
-    # Platform-specific searches
-    review_platforms = ["yelp.com", "tripadvisor.com", "google.com", "trustpilot.com", "reddit.com"]
-    for platform in review_platforms:
-        search_queries.append(f'"{target_name}" site:{platform}')
-
-    print(f"🔍 Executing {len(search_queries)} targeted queries...")
-
-    for i, query in enumerate(search_queries[:25], 1):  # Increased limit
-        print(f"  🔍 Query {i}/25: {query[:50]}...")
-
-        try:
-            results = query_serper(query, num_results=5)
-
-            if not results:
+        all_results = []
+        for i, query in enumerate(queries, 1):
+            print(f"🔍 Executing query {i}/{len(queries)}: {query[:50]}...", flush=True)
+            try:
+                result = query_serper(query, num_results=5)
+                if result:
+                    all_results.extend(result)
+                    print(f"    ✅ Query returned {len(result)} results", flush=True)
+                else:
+                    print(f"    ⚠️ Query returned no results", flush=True)
+            except Exception as query_error:
+                print(f"    ❌ Query failed: {str(query_error)}", flush=True)
                 continue
+                
+        print(f"🔍 SERPER returned {len(all_results)} total results", flush=True)
 
-            all_search_results.extend(results)
+        # Extract URLs and contact info from results
+        for i, result in enumerate(all_results):
+            print(f"📊 Processing result {i+1}/{len(all_results)}", flush=True)
+            
+            text_content = ""
+            url = ""
 
-            # Extract clues from each result
-            for result in results:
-                text_content = ""
-                url = ""
-
-                if isinstance(result, dict):
-                    text_content = f"{result.get('title', '')} {result.get('snippet', '')}"
-                    url = result.get('link', '')
-                elif isinstance(result, str):
-                    text_content = result
-                    # Extract URLs from text
-                    import re
-                    url_pattern = r'https?://[^\s<>"\']+(?:[^\s<>"\'.,;!?])'
-                    urls = re.findall(url_pattern, result)
-                    url = urls[0] if urls else ""
-
-                # Extract contact information from text
+            if isinstance(result, dict):
+                text_content = f"{result.get('title', '')} {result.get('snippet', '')}"
+                url = result.get('link', '')
+            elif isinstance(result, str):
+                text_content = result
+                # Extract URLs from text
                 import re
+                url_pattern = r'https?://[^\s<>"\']+(?:[^\s<>"\'.,;!?])'
+                urls = re.findall(url_pattern, result)
+                url = urls[0] if urls else ""
 
-                # Email extraction
-                email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-                emails = re.findall(email_pattern, text_content)
-                for found_email in emails:
-                    discovered_data["emails"].add(found_email.lower())
-                    print(f"    📧 Email found: {found_email}")
+            # Extract contact information from text
+            import re
 
-                # Phone extraction
-                phone_pattern = r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'
-                phones = re.findall(phone_pattern, text_content)
-                for found_phone in phones:
-                    clean_phone = re.sub(r'[^\d]', '', found_phone)
-                    if len(clean_phone) == 10:
-                        discovered_data["phones"].add(clean_phone)
-                        print(f"    📞 Phone found: {found_phone}")
+            # Email extraction
+            email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+            emails = re.findall(email_pattern, text_content)
+            for found_email in emails:
+                discovered_data["emails"].append(found_email.lower())
+                print(f"    📧 Email found: {found_email}", flush=True)
 
-                # Profile URL detection
-                if url and is_mri_target_url(url):
-                    if is_profile_link(url):
-                        discovered_data["profiles"].append({
-                            "url": url,
-                            "platform": extract_platform_from_url(url),
-                            "source_query": query
-                        })
-                        print(f"    👤 Profile found: {url}")
+            # Phone extraction
+            phone_pattern = r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'
+            phones = re.findall(phone_pattern, text_content)
+            for found_phone in phones:
+                clean_phone = re.sub(r'[^\d]', '', found_phone)
+                if len(clean_phone) == 10:
+                    discovered_data["phones"].append(clean_phone)
+                    print(f"    📞 Phone found: {found_phone}", flush=True)
 
-                    # Add to clue queue for potential scraping
-                    if url not in clue_queue:
-                        clue_queue.append(url)
+            # Profile URL detection
+            if url and is_mri_target_url(url):
+                if is_profile_link(url):
+                    discovered_data["profiles"].append({
+                        "url": url,
+                        "platform": extract_platform_from_url(url),
+                        "source_query": f"Query {i+1}"
+                    })
+                    print(f"    👤 Profile found: {url}", flush=True)
 
-        except Exception as e:
-            print(f"    ❌ Query failed: {str(e)}")
-            continue
+                # Add to clue queue for potential scraping
+                if url not in clue_queue:
+                    clue_queue.append(url)
+                    print(f"    🧩 URL added to clue queue: {url}", flush=True)
 
-    print(f"✅ Discovery complete: {len(clue_queue)} URLs queued for analysis")
+        print(f"🧩 Clue Queue populated with {len(clue_queue)} URLs", flush=True)
 
-    # Phase 2: URL Scraping & Deep Content Analysis
-    print("\n🕷️ Phase 2: URL Scraping & Deep Content Analysis...")
-    print(f"🔍 Total URLs in clue queue: {len(clue_queue)}")
-
-    # Scrape the most promising URLs from clue queue
-    scraped_urls = 0
-    max_scrapes = 8  # Limit to prevent timeout
-
-    print(f"📊 Processing first {max_scrapes} URLs from clue queue...")
-    
-    for i, url in enumerate(clue_queue[:max_scrapes], 1):
-        print(f"\n🧪 [{i}/{min(max_scrapes, len(clue_queue))}] Checking URL: {url}")
+        # Phase 2: URL Scraping
+        print(f"🕷️ Starting URL scraping phase...", flush=True)
+        max_scrapes = min(8, len(clue_queue))  # Limit to prevent timeout
         
-        # Check if URL passes target filter
-        if not is_mri_target_url(url):
-            print(f"⛔️ URL filtered out by is_mri_target_url(): {url}")
-            continue
+        for i, url in enumerate(clue_queue[:max_scrapes], 1):
+            print(f"🧪 [{i}/{max_scrapes}] Scraping URL: {url}", flush=True)
             
-        print(f"✅ URL passed target filter, proceeding to scrape...")
-        
-        try:
-            print(f"    🕷️ Calling scrape_contact_info() for: {url}")
-            scraped_data = scrape_contact_info(url)
-            
-            if not scraped_data:
-                print(f"⛔️ scrape_contact_info() returned empty/None for: {url}")
+            try:
+                scraped = scrape_contact_info(url)
+                urls_scraped += 1
+                
+                if scraped:
+                    emails_found = scraped.get("emails", [])
+                    phones_found = scraped.get("phones", [])
+                    profiles_found = scraped.get("profiles", [])
+                    
+                    discovered_data["emails"].extend(emails_found)
+                    discovered_data["phones"].extend(phones_found)
+                    discovered_data["profiles"].extend(profiles_found)
+                    
+                    print(f"    ✅ Scraped: {len(emails_found)} emails, {len(phones_found)} phones, {len(profiles_found)} profiles", flush=True)
+                else:
+                    print(f"    ⚠️ No data scraped from URL", flush=True)
+                    
+            except Exception as scrape_error:
+                print(f"    ❌ Scraping failed: {str(scrape_error)}", flush=True)
                 continue
-                
-            # Check what data was returned
-            emails_found = scraped_data.get("emails", [])
-            phones_found = scraped_data.get("phones", [])
-            social_found = scraped_data.get("social_links", [])
-            
-            print(f"📊 Scrape results for {url}:")
-            print(f"    📧 Emails: {len(emails_found)} found")
-            print(f"    📞 Phones: {len(phones_found)} found") 
-            print(f"    🔗 Social: {len(social_found)} found")
-            
-            if not any([emails_found, phones_found, social_found]):
-                print(f"⚠️ No useful data extracted from: {url}")
-            else:
-                print(f"✅ Successfully scraped data from: {url}")
-                scraped_urls += 1
 
-            # Merge scraped data
-            for email in emails_found:
-                discovered_data["emails"].add(email)
-                print(f"      📧 Added scraped email: {email}")
+    except Exception as e:
+        print(f"❌ Error in MRI scan: {str(e)}", flush=True)
+        import traceback
+        print(traceback.format_exc(), flush=True)
 
-            for phone in phones_found:
-                discovered_data["phones"].add(phone)
-                print(f"      📞 Added scraped phone: {phone}")
+    # Remove duplicates
+    discovered_data["emails"] = list(set(discovered_data["emails"]))
+    discovered_data["phones"] = list(set(discovered_data["phones"]))
 
-            for social in social_found:
-                discovered_data["social_links"].append(social)
-                print(f"      🔗 Added scraped social: {social}")
-                
-        except Exception as scrape_error:
-            print(f"❌ Exception during scraping {url}: {scrape_error}")
-            print(f"    Error type: {type(scrape_error).__name__}")
-            continue
+    print(f"🧬 MRI Scan Completed for {alias}", flush=True)
+    print(f"📊 Final Results:", flush=True)
+    print(f"  📧 Emails: {len(discovered_data['emails'])}", flush=True)
+    print(f"  📞 Phones: {len(discovered_data['phones'])}", flush=True)
+    print(f"  👤 Profiles: {len(discovered_data['profiles'])}", flush=True)
+    print(f"  🕷️ URLs Scraped: {urls_scraped}", flush=True)
 
-    print(f"\n    ✅ Scraping complete: {scraped_urls} URLs successfully scraped out of {min(max_scrapes, len(clue_queue))} attempted")
-
-    # Phase 3: Identity Clue Analysis
-    print("\n🔍 Phase 3: Identity Clue Analysis...")
-
-    # Look for identity patterns in collected data
-    combined_text = " ".join([str(r) for r in all_search_results])
-
-    # Extract potential full names
-    name_patterns = [
-        r'Seth\s+([A-Z][a-z]+)',  # "Seth Lastname"
-        r'([A-Z][a-z]+)\s+([A-Z][a-z]+)',  # "First Last" patterns
-    ]
-
-    for pattern in name_patterns:
-        matches = re.findall(pattern, combined_text, re.IGNORECASE)
-        for match in matches:
-            if isinstance(match, tuple):
-                full_name = " ".join(match)
-            else:
-                full_name = f"Seth {match}" if "seth" not in match.lower() else match
-
-            if len(full_name.split()) >= 2 and full_name not in [target_name]:
-                print(f"    🎯 Potential identity: {full_name}")
-
-    # Convert sets to lists for JSON serialization
-    discovered_data["emails"] = list(discovered_data["emails"])
-    discovered_data["phones"] = list(discovered_data["phones"])
-
-    # Phase 4: Analysis Summary
-    print("\n📊 Phase 4: Analysis Summary...")
-    scan_summary = {
-        "total_emails_found": len(discovered_data["emails"]),
-        "total_phones_found": len(discovered_data["phones"]),
-        "total_profiles_found": len(discovered_data["profiles"]),
-        "urls_scanned": len(all_search_results),
-        "urls_scraped": scraped_urls,
-        "clues_queued": len(clue_queue),
-        "scan_complete": True
-    }
-
-    mri_results = {
-        "target": target_name,
-        "phone": discovered_data["phones"][0] if discovered_data["phones"] else phone,
-        "email": discovered_data["emails"][0] if discovered_data["emails"] else email,
+    return {
+        "target": alias,
+        "phone": discovered_data["phones"][0] if discovered_data["phones"] else None,
+        "email": discovered_data["emails"][0] if discovered_data["emails"] else None,
         "discovered_data": discovered_data,
-        "scan_summary": scan_summary,
-        "clue_queue": clue_queue[:10]  # Preview of top 10 URLs
+        "scan_summary": {
+            "scan_complete": True,
+            "total_emails_found": len(discovered_data["emails"]),
+            "total_phones_found": len(discovered_data["phones"]),
+            "total_profiles_found": len(discovered_data["profiles"]),
+            "urls_scanned": len(clue_queue),
+            "urls_scraped": urls_scraped,
+            "clues_queued": len(clue_queue)
+        },
+        "clue_queue": clue_queue
     }
-
-    print(f"🎯 Enhanced MRI Scan Complete:")
-    print(f"  📧 Emails: {scan_summary['total_emails_found']}")
-    print(f"  📞 Phones: {scan_summary['total_phones_found']}")
-    print(f"  👤 Profiles: {scan_summary['total_profiles_found']}")
-    print(f"  🌐 URLs Analyzed: {scan_summary['urls_scanned']}")
-    print(f"  🕷️ URLs Scraped: {scan_summary['urls_scraped']}")
-
-    return mri_results
 
 def is_mri_target_url(url: str) -> bool:
     """Check if URL is worth MRI scanning"""
