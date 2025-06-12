@@ -63,7 +63,7 @@ def alias_tools():
             print(f"📊 Input parameters: handle='{handle}', location='{location}', platform='{platform}'")
             
             try:
-                mri_results = enhanced_mri_scan(alias=handle)
+                mri_results = enhanced_mri_scan(alias=handle, location=location)
                 print("✅ MRI scan completed without errors")
             except Exception as e:
                 print(f"❌ MRI scan exception: {e}")
