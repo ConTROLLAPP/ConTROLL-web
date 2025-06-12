@@ -143,23 +143,38 @@ def enhanced_mri_scan(alias, location=None, platform=None, review=None, verbose=
 
     try:
         # Import required functions
+        print(f"📥 Importing search_utils functions...", flush=True)
         from search_utils import generate_platform_queries, extract_identity_clues
+        print(f"✅ Successfully imported search_utils functions", flush=True)
         
+        print(f"🔧 Generating platform queries for alias='{alias}', location='{location}'", flush=True)
         queries = generate_platform_queries(alias, location, [])
         print(f"🧠 Generated {len(queries)} queries", flush=True)
+        
+        if len(queries) == 0:
+            print(f"⚠️ WARNING: No queries generated! This will cause empty results.", flush=True)
+        else:
+            print(f"📝 First few queries: {queries[:3]}", flush=True)
 
         all_results = []
         for i, query in enumerate(queries, 1):
             print(f"🔍 Executing query {i}/{len(queries)}: {query[:50]}...", flush=True)
             try:
+                print(f"📡 Calling query_serper with query: {query}", flush=True)
                 result = query_serper(query, num_results=5)
+                print(f"📡 query_serper returned: {type(result)}, length: {len(result) if result else 0}", flush=True)
+                
                 if result:
                     all_results.extend(result)
                     print(f"    ✅ Query returned {len(result)} results", flush=True)
+                    # Show first result for debugging
+                    if len(result) > 0:
+                        print(f"    📄 Sample result: {str(result[0])[:100]}...", flush=True)
                 else:
-                    print(f"    ⚠️ Query returned no results", flush=True)
+                    print(f"    ⚠️ Query returned no results (result={result})", flush=True)
             except Exception as query_error:
                 print(f"    ❌ Query failed: {str(query_error)}", flush=True)
+                print(f"    ❌ Query error type: {type(query_error).__name__}", flush=True)
                 continue
                 
         print(f"🔍 SERPER returned {len(all_results)} total results", flush=True)
