@@ -110,14 +110,22 @@ def alias_tools():
                 best_email = mri_results['discovered_data']['emails'][0] if mri_results['discovered_data']['emails'] else None
                 best_phone = mri_results['discovered_data']['phones'][0] if mri_results['discovered_data']['phones'] else extracted_phone
                 
+                # Extract parameters for evaluation
+                confidence = mri_results.get('confidence_score', 75)
+                platform_hits = len(mri_results.get('discovered_data', {}).get('profiles', []))
+                stylometry_flags = len(mri_results.get('stylometry_analysis', {}).get('flags', []))
+                writing_samples = len(mri_results.get('discovered_data', {}).get('writing_samples', []))
+                is_critic = mri_results.get('critic_detected', False)
+                is_weak_critic = False
+                
                 # Run full evaluation with discovered data
                 evaluation = evaluate_guest(
-                    confidence=mri_results.get('confidence_score', 75),
-                    platform_hits=len(mri_results.get('discovered_data', {}).get('profiles', [])),
-                    stylometry_flags=len(mri_results.get('stylometry_analysis', {}).get('flags', [])),
-                    writing_samples=len(mri_results.get('discovered_data', {}).get('writing_samples', [])),
-                    is_critic=mri_results.get('critic_detected', False),
-                    is_weak_critic=False
+                    confidence,
+                    platform_hits,
+                    stylometry_flags,
+                    writing_samples,
+                    is_critic,
+                    is_weak_critic
                 )
                 
                 # Merge evaluation results into MRI results
