@@ -112,7 +112,7 @@ def alias_tools():
                 
                 # Run full evaluation with discovered data
                 evaluation = evaluate_guest(
-                    name=handle,
+                    alias=handle,
                     email=best_email,
                     phone=best_phone,
                     review_text=review_text,
