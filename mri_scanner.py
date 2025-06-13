@@ -124,7 +124,14 @@ def scrape_contact_info(url: str) -> Dict[str, List[str]]:
         print(f"    ❌ Scraping failed for {url}: {str(e)}")
         return {"emails": [], "phones": [], "profiles": [], "social_links": []}
 
-def enhanced_mri_scan(alias, location=None, platform=None, review=None, verbose=False):
+def enhanced_mri_scan(
+    alias,
+    phone=None,
+    location=None,
+    source_platform=None,
+    review_text=None,
+    verbose=False
+):
     """
     Enhanced MRI scan with diagnostic logging and flow verification
     """
