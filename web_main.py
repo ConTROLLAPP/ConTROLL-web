@@ -4,6 +4,10 @@ import os
 import time
 from datetime import datetime
 import traceback
+import logging
+
+# Configure logging for debugging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 # Import ConTROLL modules
 from review_matcher import analyze_review_text, analyze_full_review_block
@@ -47,8 +51,15 @@ def alias_tools():
         platform = request.form.get('platform')
         review_text = request.form.get('review_text')
 
+        # Enhanced logging for all scan attempts
+        logging.info(f"🚀 Starting Enhanced MRI for alias: {handle}")
+        logging.info(f"📍 Location: {location}")
+        logging.info(f"🌐 Platform: {platform}")
+        logging.info(f"📝 Review text length: {len(review_text) if review_text else 0} characters")
+
         try:
             print(f"👁️ MRI Triggered for alias: {handle}")
+            logging.info(f"👁️ MRI Triggered for alias: {handle}")
             
             # Extract phone from review text if possible
             extracted_phone = None
@@ -57,12 +68,20 @@ def alias_tools():
                 phone_matches = re.findall(r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b', review_text)
                 if phone_matches:
                     extracted_phone = phone_matches[0]
+                    logging.info(f"📞 Extracted phone from review: {extracted_phone}")
             
             # PHASE 1: Enhanced MRI scan with full investigation logic
             print("📡 Starting enhanced MRI scan...")
             print(f"📊 Input parameters: handle='{handle}', location='{location}', platform='{platform}'")
             
             try:
+                logging.info(f"🔍 Calling enhanced_mri_scan with parameters:")
+                logging.info(f"   - alias: {handle}")
+                logging.info(f"   - phone: {extracted_phone}")
+                logging.info(f"   - location: {location}")
+                logging.info(f"   - source_platform: {platform}")
+                logging.info(f"   - review_text length: {len(review_text) if review_text else 0}")
+                
                 # Run full investigation with all parameters
                 mri_results = enhanced_mri_scan(
                     alias=handle,
@@ -73,6 +92,16 @@ def alias_tools():
                     verbose=True
                 )
                 print("✅ MRI scan completed without errors")
+                logging.info("✅ MRI scan completed without errors")
+                logging.info(f"📊 MRI Results Summary:")
+                logging.info(f"   - Emails found: {len(mri_results.get('discovered_data', {}).get('emails', []))}")
+                logging.info(f"   - Phones found: {len(mri_results.get('discovered_data', {}).get('phones', []))}")
+                logging.info(f"   - Profiles found: {len(mri_results.get('discovered_data', {}).get('profiles', []))}")
+                logging.info(f"   - URLs scanned: {mri_results.get('scan_summary', {}).get('urls_scanned', 0)}")
+                
+                # Log full MRI results for debugging
+                logging.info("🔍 Complete MRI Results:")
+                logging.info(json.dumps(mri_results, indent=2))
                 
                 # PHASE 2: Enhanced analysis and risk scoring
                 from conTROLL_decision_engine import evaluate_guest
@@ -112,6 +141,10 @@ def alias_tools():
                 
             except Exception as e:
                 print(f"❌ MRI scan exception: {e}")
+                logging.error(f"❌ MRI scan exception: {e}")
+                logging.error("❌ Full traceback:")
+                logging.error(traceback.format_exc())
+                
                 mri_results = {
                     'error': str(e),
                     'trace': traceback.format_exc(),
@@ -122,9 +155,14 @@ def alias_tools():
                     'risk_score': 50,
                     'rating_reason': f'Scan failed: {str(e)}'
                 }
+                logging.info(f"🔄 Fallback results created: {json.dumps(mri_results, indent=2)}")
             
         except Exception as e:
             print(f"❌ Complete investigation failed: {e}")
+            logging.error(f"❌ Complete investigation failed: {e}")
+            logging.error("❌ Complete investigation traceback:")
+            logging.error(traceback.format_exc())
+            
             mri_results = {
                 'error': str(e),
                 'trace': traceback.format_exc(),
@@ -135,8 +173,13 @@ def alias_tools():
                 'risk_score': 50,
                 'rating_reason': f'Investigation failed: {str(e)}'
             }
+            logging.info(f"🔄 Final fallback results: {json.dumps(mri_results, indent=2)}")
 
         print("🔬 COMPLETE MRI INVESTIGATION RESULT:", json.dumps(mri_results, indent=2))
+        logging.info("🔬 COMPLETE MRI INVESTIGATION RESULT:")
+        logging.info(json.dumps(mri_results, indent=2))
+        
+        logging.info(f"📤 Rendering template with results for alias: {handle}")
         return render_template('alias_tools.html', results=mri_results)
 
     return render_template('alias_tools.html')
