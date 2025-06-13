@@ -112,18 +112,19 @@ def alias_tools():
                 
                 # Run full evaluation with discovered data
                 evaluation = evaluate_guest(
-                    alias=handle,
-                    email=best_email,
-                    phone=best_phone,
-                    review_text=review_text,
-                    platform=platform
+                    confidence=mri_results.get('confidence_score', 75),
+                    platform_hits=len(mri_results.get('discovered_data', {}).get('profiles', [])),
+                    stylometry_flags=len(mri_results.get('stylometry_analysis', {}).get('flags', [])),
+                    writing_samples=len(mri_results.get('discovered_data', {}).get('writing_samples', [])),
+                    is_critic=mri_results.get('critic_detected', False),
+                    is_weak_critic=False
                 )
                 
                 # Merge evaluation results into MRI results
-                mri_results['risk_score'] = evaluation.get('risk_score', 50)
-                mri_results['star_rating'] = evaluation.get('star_rating', 3)
-                mri_results['rating_reason'] = evaluation.get('rating_reason', 'Standard evaluation')
-                mri_results['evaluation_flags'] = evaluation.get('flags', [])
+                mri_results['risk_score'] = evaluation.get('risk', 50)
+                mri_results['star_rating'] = evaluation.get('stars', 3)
+                mri_results['rating_reason'] = evaluation.get('reason', 'Standard evaluation')
+                mri_results['confidence'] = evaluation.get('confidence', 75)
                 
                 # PHASE 3: Stylometry analysis if review text provided
                 if review_text and len(review_text) > 50:
