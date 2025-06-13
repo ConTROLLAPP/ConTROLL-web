@@ -58,37 +58,85 @@ def alias_tools():
                 if phone_matches:
                     extracted_phone = phone_matches[0]
             
-            # PATCH START — Force logging before and after MRI call
+            # PHASE 1: Enhanced MRI scan with full investigation logic
             print("📡 Starting enhanced MRI scan...")
             print(f"📊 Input parameters: handle='{handle}', location='{location}', platform='{platform}'")
             
             try:
-                mri_results = enhanced_mri_scan(alias=handle, location=location)
+                # Run full investigation with all parameters
+                mri_results = enhanced_mri_scan(
+                    alias=handle,
+                    phone=extracted_phone,
+                    location=location,
+                    source_platform=platform,
+                    review_text=review_text,
+                    verbose=True
+                )
                 print("✅ MRI scan completed without errors")
+                
+                # PHASE 2: Enhanced analysis and risk scoring
+                from conTROLL_decision_engine import evaluate_guest
+                
+                # Extract discovered contact info
+                best_email = mri_results['discovered_data']['emails'][0] if mri_results['discovered_data']['emails'] else None
+                best_phone = mri_results['discovered_data']['phones'][0] if mri_results['discovered_data']['phones'] else extracted_phone
+                
+                # Run full evaluation with discovered data
+                evaluation = evaluate_guest(
+                    name=handle,
+                    email=best_email,
+                    phone=best_phone,
+                    review_text=review_text,
+                    platform=platform
+                )
+                
+                # Merge evaluation results into MRI results
+                mri_results['risk_score'] = evaluation.get('risk_score', 50)
+                mri_results['star_rating'] = evaluation.get('star_rating', 3)
+                mri_results['rating_reason'] = evaluation.get('rating_reason', 'Standard evaluation')
+                mri_results['evaluation_flags'] = evaluation.get('flags', [])
+                
+                # PHASE 3: Stylometry analysis if review text provided
+                if review_text and len(review_text) > 50:
+                    from search_utils import run_stylometry_analysis
+                    stylometry_results = run_stylometry_analysis(review_text, handle)
+                    mri_results['stylometry_analysis'] = stylometry_results
+                
+                print(f"\n🧬 Complete MRI Analysis Results for {handle}:")
+                print(f"📧 Emails discovered: {len(mri_results.get('discovered_data', {}).get('emails', []))}")
+                print(f"📞 Phones discovered: {len(mri_results.get('discovered_data', {}).get('phones', []))}")
+                print(f"👤 Profiles discovered: {len(mri_results.get('discovered_data', {}).get('profiles', []))}")
+                print(f"⭐ Star Rating: {mri_results.get('star_rating', 'N/A')}/5")
+                print(f"⚠️ Risk Score: {mri_results.get('risk_score', 'N/A')}")
+                print(f"🌐 URLs scanned: {mri_results.get('scan_summary', {}).get('urls_scanned', 0)}")
+                
             except Exception as e:
                 print(f"❌ MRI scan exception: {e}")
                 mri_results = {
                     'error': str(e),
-                    'trace': traceback.format_exc()
+                    'trace': traceback.format_exc(),
+                    'handle': handle,
+                    'location': location,
+                    'platform': platform,
+                    'star_rating': 3,
+                    'risk_score': 50,
+                    'rating_reason': f'Scan failed: {str(e)}'
                 }
             
-            print("🔬 MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
-            # PATCH END
-            
-            print(f"\n🧬 MRI Scan Results for {handle}:")
-            print(f"📧 Emails discovered: {len(mri_results.get('discovered_data', {}).get('emails', []))}")
-            print(f"📞 Phones discovered: {len(mri_results.get('discovered_data', {}).get('phones', []))}")
-            print(f"👤 Profiles discovered: {len(mri_results.get('discovered_data', {}).get('profiles', []))}")
-            print(f"🌐 URLs scanned: {mri_results.get('scan_summary', {}).get('urls_scanned', 0)}")
-            
         except Exception as e:
-            print(f"❌ MRI scan failed: {e}")
+            print(f"❌ Complete investigation failed: {e}")
             mri_results = {
                 'error': str(e),
-                'trace': traceback.format_exc()
+                'trace': traceback.format_exc(),
+                'handle': handle,
+                'location': location,
+                'platform': platform,
+                'star_rating': 3,
+                'risk_score': 50,
+                'rating_reason': f'Investigation failed: {str(e)}'
             }
 
-        print("🔌 MRI SCAN RESULT:", json.dumps(mri_results, indent=2))
+        print("🔬 COMPLETE MRI INVESTIGATION RESULT:", json.dumps(mri_results, indent=2))
         return render_template('alias_tools.html', results=mri_results)
 
     return render_template('alias_tools.html')
