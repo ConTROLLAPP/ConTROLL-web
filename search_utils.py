@@ -884,88 +884,87 @@ def extract_clue_phrases(text):
     print(f"🧬 Clue phrases found: {found}")
     return found
 
-def scrape_contact_info(text):
+def scrape_contact_info(url, verbose=False):
     """
-    Extract contact information from text content
-    Improved regex patterns with international format support and fallback guards
+    Enhanced contact info scraping using Puppeteer + Cheerio via Render endpoint
+    Returns structured contact information extracted from the page
     """
-    import re
-
-    # Enhanced email extraction with comprehensive patterns
-    email_patterns = [
-        r'[\w\.-]+@[\w\.-]+\.\w+',  # Basic email pattern
-        r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',  # More strict pattern
-        r'email["\s]*:["\s]*([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,})',  # JSON format
-        r'mailto:([A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,})',  # Mailto links
-    ]
-    
-    # Enhanced phone extraction with international format support
-    phone_patterns = [
-        r'\b(?:\+?1[-.\s]?)*\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}\b',  # US format with optional +1
-        r'\+?1?[-.\s]?\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}',  # Alternative US format
-        r'\(?\d{3}\)?[-.\s]?\d{3}[-.\s]?\d{4}',  # Basic US format
-        r'\+\d{1,3}[-.\s]?\d{1,4}[-.\s]?\d{1,4}[-.\s]?\d{1,9}',  # International format
-    ]
-    
-    emails = []
-    phones = []
-    
-    # Safe text handling with fallback guards
-    if not text:
-        return {'emails': [], 'phones': []}
-    
     try:
-        # Convert to string if not already
-        text_content = str(text)
-        
-        # Extract emails using all patterns
-        for pattern in email_patterns:
-            try:
-                matches = re.findall(pattern, text_content, re.IGNORECASE)
-                for match in matches:
-                    email = match if isinstance(match, str) else match[0] if isinstance(match, tuple) else str(match)
-                    # Validate email has proper format
-                    if '@' in email and '.' in email.split('@')[1] and len(email) > 5:
-                        # Filter out obviously bad emails
-                        if not any(bad in email.lower() for bad in ['0000000070', 'example.com', 'test.test']):
-                            emails.append(email.lower().strip())
-            except Exception as e:
-                # Continue processing other patterns if one fails
-                continue
-        
-        # Extract phones using all patterns
-        for pattern in phone_patterns:
-            try:
-                matches = re.findall(pattern, text_content, re.IGNORECASE)
-                for match in matches:
-                    phone = match if isinstance(match, str) else str(match)
-                    # Clean phone number
-                    clean_phone = re.sub(r'[^\d+]', '', phone)
-                    # Validate phone number length and format
-                    if 10 <= len(clean_phone.replace('+', '')) <= 15:
-                        # Filter out obviously bad numbers
-                        if not any(bad in clean_phone for bad in ['0000000000', '1111111111', '2222222222']):
-                            phones.append(phone.strip())
-            except Exception as e:
-                # Continue processing other patterns if one fails
-                continue
-        
-        # Remove duplicates while preserving order
-        emails = list(dict.fromkeys(emails)) if emails else []
-        phones = list(dict.fromkeys(phones)) if phones else []
-        
-        return {
-            'emails': emails,
-            'phones': phones
-        }
-        
+        scraper_url = "https://controll-scraper.onrender.com/scrape"
+        response = requests.post(scraper_url, json={"url": url}, timeout=10)
+
+        if response.status_code == 200:
+            html = response.json().get("html", "")
+            if verbose:
+                print(f"🧠 Scraped HTML from {url}:\n", html[:1000])
+
+            # Extract emails and phones
+            emails = re.findall(r"[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+", html)
+            phones = re.findall(r"\(?\b[0-9]{3}\)?[-.\s]?[0-9]{3}[-.\s]?[0-9]{4}\b", html)
+
+            # Detect review platform URLs
+            review_platforms = []
+            known_review_sites = [
+                "yelp.com", "tripadvisor.com", "zomato.com", "trustpilot.com",
+                "opentable.com", "booking.com", "glassdoor.com"
+            ]
+            for site in known_review_sites:
+                if site in html:
+                    review_platforms.append(site)
+
+            # Detect social media links
+            social_links = []
+            known_social_sites = [
+                "facebook.com", "linkedin.com", "twitter.com", "instagram.com",
+                "tiktok.com", "threads.net", "youtube.com"
+            ]
+            for site in known_social_sites:
+                if site in html:
+                    social_links.append(site)
+
+            # Clean and filter results
+            clean_emails = []
+            for email in emails:
+                email = email.lower().strip()
+                if "@" in email and "." in email.split("@")[1]:
+                    if not filter_junk_identity(email=email):
+                        clean_emails.append(email)
+                    elif verbose:
+                        print(f"🚫 Filtered junk email: {email}")
+
+            clean_phones = []
+            for phone in phones:
+                clean_phone = re.sub(r'[^\d]', '', str(phone))
+                if len(clean_phone) >= 10:
+                    if not filter_junk_identity(phone=clean_phone):
+                        clean_phones.append(clean_phone)
+                    elif verbose:
+                        print(f"🚫 Filtered junk phone: {clean_phone}")
+
+            result = {
+                "emails": list(set(clean_emails)),
+                "phones": list(set(clean_phones)),
+                "review_platforms": review_platforms,
+                "social_links": social_links,
+                "html_snippet": html[:1000]  # optional for debugging
+            }
+            
+            if verbose:
+                print(f"✅ Contact extraction complete: {len(result['emails'])} emails, {len(result['phones'])} phones")
+                if result["emails"]:
+                    print(f"   📧 Emails: {result['emails']}")
+                if result["phones"]:
+                    print(f"   📞 Phones: {result['phones']}")
+                if review_platforms:
+                    print(f"   📝 Review platforms: {review_platforms}")
+                if social_links:
+                    print(f"   📱 Social links: {social_links}")
+            
+            return result
+        else:
+            return {"error": f"Failed to scrape: {response.status_code}"}
     except Exception as e:
-        # Fallback guard - never throw, always return safe structure
-        print(f"⚠️ scrape_contact_info error: {e}")
-        return {
-            'emails': [],
-            'phones': []
-        }
+        return {"error": str(e)}
 
 # 🧠 DO NOT DELETE — Stylometry Analysis Trigger
 def run_stylometry_analysis(name, email=None, phone=None):
