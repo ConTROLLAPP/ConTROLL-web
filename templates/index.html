@@ -1,15 +1,46 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>ConTROLL Web</title>
-    <link rel="stylesheet" type="text/css" href="/static/style.css">
+  <title>ConTROLL Alias Scanner</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 </head>
 <body>
-    <h1>Welcome to ConTROLL</h1>
-    <ul>
-        <li><a href="/guest_tools">🧍 Guest Tools</a></li>
-        <li><a href="/alias_tools">🕵️ Alias + Ghost Tools</a></li>
-        <li><a href="/review_tools">📝 Review Tools</a></li>
-    </ul>
+  <h1>Alias MRI Scan</h1>
+  <form id="aliasForm">
+    <label for="handle">Enter alias (e.g., Seth D.):</label>
+    <input type="text" id="handle" name="handle" required />
+    <button type="submit">Run MRI</button>
+  </form>
+
+  <pre id="result"></pre>
+
+  <script>
+    const form = document.getElementById("aliasForm");
+    const resultEl = document.getElementById("result");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const handle = document.getElementById("handle").value.trim();
+      if (!handle) return;
+
+      resultEl.textContent = "Running scan...";
+
+      try {
+        const response = await fetch("/alias_tools", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({ handle })
+        });
+
+        const data = await response.json();
+        resultEl.textContent = JSON.stringify(data, null, 2);
+      } catch (err) {
+        resultEl.textContent = `Error: ${err}`;
+      }
+    });
+  </script>
 </body>
 </html>
