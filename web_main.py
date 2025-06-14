@@ -1,67 +1,61 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request, jsonify
 from mri_scanner import enhanced_mri_scan
 from conTROLL_decision_engine import evaluate_guest
+
 import logging
-import traceback
-import traceback
 
 app = Flask(__name__)
-
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return "🔬 ConTROLL MRI Web API is running."
 
-@app.route('/alias_tools', methods=['GET', 'POST'])
+@app.route('/alias_tools', methods=['POST'])
 def alias_tools():
-    if request.method == 'GET':
-        return jsonify({"error": "GET method not supported on this route"}), 405
-    
     try:
         data = request.get_json()
-        handle = data.get('handle', '')
-        extracted_phone = data.get('phone', None)
-        
-        if not handle:
-            return jsonify({'error': 'Missing handle'}), 400
+        handle = data.get("handle", "").strip()
+        phone = data.get("phone", "")
+        email = data.get("email", "")
+        location = data.get("location", "unknown")
+        platform = data.get("platform", "unknown")
 
-        logger.info(f"🔍 Starting enhanced MRI scan for: {handle}")
+        if not handle:
+            return jsonify({"error": "Missing alias/handle"}), 400
+
+        logging.info(f"🎯 Starting MRI scan for: {handle}")
         mri_results = enhanced_mri_scan(handle)
 
-        confidence = mri_results.get('confidence', 50)
-        stylometry_flags = mri_results.get('stylometry_analysis', [])
-        writing_samples = mri_results.get('writing_samples', [])
-        is_critic = mri_results.get('is_critic', False)
-        is_weak_critic = mri_results.get('is_weak_critic', False)
-        platform_hits = mri_results.get('platform_hits', [])
-
-        risk_score, star_rating, rating_reason, _ = evaluate_guest(
-            confidence,
-            platform_hits,
-            stylometry_flags,
-            writing_samples,
-            is_critic,
-            is_weak_critic
+        risk, stars, reason, confidence = evaluate_guest(
+            confidence=mri_results.get("confidence", 50),
+            platform_hits=mri_results.get("discovered_data", {}).get("review_platforms", []),
+            stylometry_flags=mri_results.get("stylometry_analysis", []),
+            writing_samples=mri_results.get("writing_samples", []),
+            is_critic=mri_results.get("is_critic", False),
+            is_weak_critic=mri_results.get("is_weak_critic", False)
         )
 
-        logger.info(f"✅ Evaluation complete for {handle} — Stars: {star_rating}, Risk: {risk_score}")
+        full_response = {
+            "target": handle,
+            "email": mri_results.get("email"),
+            "phone": mri_results.get("phone"),
+            "risk_score": risk,
+            "star_rating": stars,
+            "rating_reason": reason,
+            "confidence": confidence,
+            "clue_queue": mri_results.get("clue_queue", []),
+            "discovered_data": mri_results.get("discovered_data", {}),
+            "stylometry_analysis": mri_results.get("stylometry_analysis", []),
+            "scan_summary": mri_results.get("scan_summary", {})
+        }
 
-        mri_results.update({
-            'risk_score': risk_score,
-            'star_rating': star_rating,
-            'rating_reason': rating_reason
-        })
-
-        return jsonify(mri_results)
+        logging.info(f"✅ MRI scan complete for {handle}")
+        return jsonify(full_response)
 
     except Exception as e:
-        logger.error(f"❌ Error during alias_tools scan: {e}", exc_info=True)
-        return jsonify({
-            'error': str(e),
-            'trace': traceback.format_exc()
-        }), 500
+        logging.exception("❌ Error during MRI scan:")
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=True)
+    app.run(host='0.0.0.0', port=10000)
