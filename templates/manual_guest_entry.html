@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Manual Guest Entry</title>
+</head>
+<body>
+  <h1>Enter Guest Information</h1>
+  <form id="guestForm">
+    <label for="name">Full Name:</label>
+    <input type="text" id="name" name="name" required /><br>
+
+    <label for="phone">Phone Number:</label>
+    <input type="text" id="phone" name="phone" required /><br>
+
+    <label for="email">Email Address:</label>
+    <input type="email" id="email" name="email" required /><br>
+
+    <button type="submit">Run Guest Scan</button>
+  </form>
+
+  <pre id="resultBox" style="white-space: pre-wrap; margin-top: 20px;"></pre>
+
+  <script>
+    const form = document.getElementById("guestForm");
+    const resultBox = document.getElementById("resultBox");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const phone = document.getElementById("phone").value;
+      const email = document.getElementById("email").value;
+
+      const response = await fetch("/guest_entry", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, phone, email }),
+      });
+
+      const result = await response.json();
+      resultBox.textContent = JSON.stringify(result, null, 2);
+    });
+  </script>
+</body>
+</html>
