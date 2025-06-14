@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Upload Screenshot</title>
+</head>
+<body>
+  <h1>Upload Reservation Screenshot</h1>
+  <form id="uploadForm" enctype="multipart/form-data" method="POST" action="/upload_screenshot">
+    <input type="file" name="screenshot" accept="image/*" required />
+    <button type="submit">Upload</button>
+  </form>
+
+  <div id="result"></div>
+
+  <script>
+    const form = document.getElementById("uploadForm");
+    form.addEventListener("submit", async function (e) {
+      e.preventDefault();
+      const formData = new FormData(form);
+      const response = await fetch("/upload_screenshot", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+      document.getElementById("result").innerText = JSON.stringify(result, null, 2);
+    });
+  </script>
+</body>
+</html>
