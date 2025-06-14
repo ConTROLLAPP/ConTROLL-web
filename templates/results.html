@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Scan Results</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 40px;
+      background-color: #f9f9f9;
+    }
+    h1 {
+      color: #333;
+    }
+    .result-block {
+      background-color: #fff;
+      padding: 20px;
+      border: 1px solid #ddd;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+    .highlight {
+      font-weight: bold;
+      font-size: 1.2em;
+    }
+    pre {
+      background-color: #eee;
+      padding: 15px;
+      border-radius: 8px;
+      overflow-x: auto;
+    }
+    .risk-high {
+      color: red;
+    }
+    .risk-medium {
+      color: orange;
+    }
+    .risk-low {
+      color: green;
+    }
+  </style>
+</head>
+<body>
+  <h1>ConTROLL Guest Risk Evaluation</h1>
+
+  <div class="result-block">
+    <p><span class="highlight">Name / Handle:</span> {{ target }}</p>
+    <p><span class="highlight">Confidence Score:</span> {{ confidence }}</p>
+    <p><span class="highlight">Star Rating:</span> {{ star_rating }}</p>
+    <p><span class="highlight">Risk Score:</span> 
+      <span class="{% if risk_score >= 80 %}risk-high{% elif risk_score >= 50 %}risk-medium{% else %}risk-low{% endif %}">
+        {{ risk_score }}
+      </span>
+    </p>
+    <p><span class="highlight">Reason:</span> {{ rating_reason }}</p>
+  </div>
+
+  <div class="result-block">
+    <h3>Stylometry Flags:</h3>
+    <ul>
+      {% for flag in stylometry_analysis %}
+        <li>{{ flag }}</li>
+      {% else %}
+        <li>No stylometric triggers detected</li>
+      {% endfor %}
+    </ul>
+  </div>
+
+  <div class="result-block">
+    <h3>Deep Scan Results:</h3>
+    <pre>{{ discovered_data | tojson(indent=2) }}</pre>
+  </div>
+
+  <div class="result-block">
+    <h3>Scan Summary:</h3>
+    <pre>{{ scan_summary | tojson(indent=2) }}</pre>
+  </div>
+
+  <div class="result-block">
+    <h3>Clue Queue:</h3>
+    <pre>{{ clue_queue | tojson(indent=2) }}</pre>
+  </div>
+</body>
+</html>
