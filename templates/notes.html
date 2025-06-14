@@ -1,0 +1,83 @@
+!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Guest Notes</title>
+</head>
+<body>
+  <h1>Guest Notes System</h1>
+
+  <form id="addNoteForm">
+    <label for="guestName">Guest Name:</label>
+    <input type="text" id="guestName" name="guestName" required /><br>
+
+    <label for="guestPhone">Phone:</label>
+    <input type="text" id="guestPhone" name="guestPhone" /><br>
+
+    <label for="guestEmail">Email:</label>
+    <input type="email" id="guestEmail" name="guestEmail" /><br>
+
+    <label for="noteText">Note:</label><br>
+    <textarea id="noteText" name="noteText" rows="4" cols="50" required></textarea><br>
+
+    <label for="rating">Star Rating:</label>
+    <select id="rating" name="rating">
+      <option value="5">5 - Treated us like family</option>
+      <option value="4">4 - Great experience</option>
+      <option value="3">3 - Neutral/standard</option>
+      <option value="2">2 - Difficult guest</option>
+      <option value="1">1 - No-show, rude, etc</option>
+    </select><br>
+
+    <button type="submit">Submit Note</button>
+  </form>
+
+  <hr>
+
+  <h2>Search Notes for Guest</h2>
+  <form id="searchForm">
+    <label for="searchName">Name:</label>
+    <input type="text" id="searchName" name="searchName" />
+    <button type="submit">Search</button>
+  </form>
+
+  <pre id="resultsBox" style="white-space: pre-wrap; margin-top: 20px;"></pre>
+
+  <script>
+    const addNoteForm = document.getElementById("addNoteForm");
+    const searchForm = document.getElementById("searchForm");
+    const resultsBox = document.getElementById("resultsBox");
+
+    addNoteForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+
+      const payload = {
+        name: document.getElementById("guestName").value,
+        phone: document.getElementById("guestPhone").value,
+        email: document.getElementById("guestEmail").value,
+        note: document.getElementById("noteText").value,
+        rating: document.getElementById("rating").value,
+      };
+
+      const res = await fetch("/add_guest_note", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+
+      const data = await res.json();
+      resultsBox.textContent = JSON.stringify(data, null, 2);
+    });
+
+    searchForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const searchName = document.getElementById("searchName").value;
+
+      const res = await fetch(`/view_guest_notes?name=${encodeURIComponent(searchName)}`);
+      const data = await res.json();
+
+      resultsBox.textContent = JSON.stringify(data, null, 2);
+    });
+  </script>
+</body>
+</html>
