@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Alias Search</title>
+</head>
+<body>
+  <h1>Run MRI Scan on Guest Alias</h1>
+  <form id="aliasForm">
+    <label for="handle">Alias (e.g. Seth D.):</label>
+    <input type="text" id="handle" name="handle" required />
+    <button type="submit">Scan</button>
+  </form>
+
+  <pre id="resultBox" style="white-space: pre-wrap; margin-top: 20px;"></pre>
+
+  <script>
+    const form = document.getElementById("aliasForm");
+    const resultBox = document.getElementById("resultBox");
+
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const handle = document.getElementById("handle").value;
+
+      const response = await fetch("/alias_tools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ handle }),
+      });
+
+      const result = await response.json();
+      resultBox.textContent = JSON.stringify(result, null, 2);
+    });
+  </script>
+</body>
