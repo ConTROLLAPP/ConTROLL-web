@@ -18,7 +18,7 @@ def alias_tools():
             handle = request.form.get("handle")
 
             if not handle:
-                return render_template("alias_tools.html", results={"error": "Missing handle"})
+                return render_template("alias_tools.html", results={"error": "Missing alias or handle"})
 
             logging.info(f"🔍 Starting MRI scan for alias: {handle}")
             mri_results = enhanced_mri_scan(handle)
