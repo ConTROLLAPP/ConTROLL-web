@@ -2,7 +2,6 @@ from flask import Flask, request, jsonify, render_template
 from mri_scanner import enhanced_mri_scan
 from conTROLL_decision_engine import evaluate_guest
 import logging
-import json
 import traceback
 
 app = Flask(__name__)
@@ -17,21 +16,12 @@ def alias_tools():
     if request.method == "POST":
         try:
             handle = request.form.get("handle")
-            location = request.form.get("location")
-            platform = request.form.get("platform")
-            review_text = request.form.get("review_text")
 
             if not handle:
                 return render_template("alias_tools.html", results={"error": "Missing handle"})
 
             logging.info(f"🔍 Starting MRI scan for alias: {handle}")
-            mri_results = enhanced_mri_scan(
-                alias=handle,
-                location=location,
-                platform=platform,
-                review=review_text,
-                verbose=True
-            )
+            mri_results = enhanced_mri_scan(handle)
 
             # Extract details for guest evaluation
             phone = mri_results.get("phone")
