@@ -1,24 +1,43 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Guest Tools</title>
-    <link rel="stylesheet" type="text/css" href="/static/style.css">
+  <title>Guest Tools – ConTROLL</title>
 </head>
 <body>
-    <h1>Guest Tools</h1>
-    <form method="POST" action="/api/guest/search">
-        <label>Name:</label><br>
-        <input type="text" name="name" required><br><br>
+  <h1>Guest Tools</h1>
+  <form id="guestForm">
+    <label for="name">Name:</label><br>
+    <input type="text" id="name" name="name" required><br><br>
 
-        <label>Email (optional):</label><br>
-        <input type="email" name="email"><br><br>
+    <label for="email">Email (optional):</label><br>
+    <input type="text" id="email" name="email"><br><br>
 
-        <label>Phone (optional):</label><br>
-        <input type="text" name="phone"><br><br>
+    <label for="phone">Phone (optional):</label><br>
+    <input type="text" id="phone" name="phone"><br><br>
 
-        <input type="submit" value="Run Guest Scan">
-    </form>
-    <br>
-    <a href="/">Back to Home</a>
+    <button type="submit">Scan Guest</button>
+  </form>
+
+  <h2>Results:</h2>
+  <pre id="guestResults"></pre>
+
+  <script>
+    document.getElementById("guestForm").addEventListener("submit", async function(e) {
+      e.preventDefault();
+
+      const name = document.getElementById("name").value;
+      const email = document.getElementById("email").value;
+      const phone = document.getElementById("phone").value;
+
+      const response = await fetch("/guest_tools", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ name, email, phone })
+      });
+
+      const result = await response.json();
+      document.getElementById("guestResults").textContent = JSON.stringify(result, null, 2);
+    });
+  </script>
 </body>
 </html>
