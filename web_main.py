@@ -10,9 +10,13 @@ app = Flask(__name__)
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-@app.route('/')
+@app.route('/', methods=['GET'])
 def index():
     return render_template('index.html')
+
+@app.route('/alias_tools', methods=['GET'])
+def alias_tools_page():
+    return render_template('alias_tools.html')
 
 @app.route('/api/status')
 def status():
@@ -23,7 +27,7 @@ def status():
         'serper_api': 'Connected'
     })
 
-@app.route('/alias_tools', methods=['POST'])
+@app.route('/api/alias_tools', methods=['POST'])
 def alias_tools():
     try:
         data = request.get_json()
