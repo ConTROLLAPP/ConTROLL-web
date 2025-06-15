@@ -33,10 +33,12 @@ def alias_tools():
             platforms = mri_results.get("discovered_data", {}).get("review_platforms", [])
             samples = mri_results.get("writing_samples", [])
 
+            platform_count = len(platforms) if isinstance(platforms, list) else 0
+
             logging.info("🔎 Running guest risk evaluation...")
             risk, stars, reason, confidence = evaluate_guest(
                 confidence=confidence,
-                platform_hits=platforms,
+                platform_hits=platform_count,
                 stylometry_flags=stylometry,
                 writing_samples=samples,
                 is_critic=critic_flag,
