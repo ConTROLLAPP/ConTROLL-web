@@ -197,13 +197,17 @@ def enhanced_mri_scan(
             if isinstance(result, dict):
                 text_content = f"{result.get('title', '')} {result.get('snippet', '')}"
                 url = result.get('link', '')
+                print(f"    📄 Dict result - URL: {url[:50] if url else 'None'}...", flush=True)
+                print(f"    📄 Dict result - Text: {text_content[:100]}...", flush=True)
             elif isinstance(result, str):
                 text_content = result
+                print(f"    📄 String result: {text_content[:100]}...", flush=True)
                 # Extract URLs from text
                 import re
                 url_pattern = r'https?://[^\s<>"\']+(?:[^\s<>"\'.,;!?])'
                 urls = re.findall(url_pattern, result)
                 url = urls[0] if urls else ""
+                print(f"    📄 Extracted URL: {url[:50] if url else 'None'}...", flush=True)
 
             # Extract contact information from text
             import re
@@ -247,6 +251,8 @@ def enhanced_mri_scan(
             # Process all found URLs
             for found_url in all_urls:
                 if found_url and is_mri_target_url(found_url):
+                    print(f"    🎯 Target URL found: {found_url}", flush=True)
+                    
                     if is_profile_link(found_url):
                         discovered_data["profiles"].append({
                             "url": found_url,
@@ -259,6 +265,30 @@ def enhanced_mri_scan(
                     if found_url not in clue_queue:
                         clue_queue.append(found_url)
                         print(f"    🧩 URL added to clue queue: {found_url}", flush=True)
+                    
+            # If no URLs found but we have text content, create synthetic URLs for people search sites
+            if not all_urls and any(platform in str(i+1) for platform in ['whitepages', 'fastpeoplesearch', 'spokeo', 'radaris', 'truepeoplesearch']):
+                # Look for names in the text content that we can construct URLs for
+                import re
+                name_patterns = [
+                    r'([A-Z][a-z]+\s+[A-Z]\s*[A-Za-z]*)',  # "Seth D Thompson"
+                    r'Seth\s+D\s+([A-Z][a-z]+)',           # "Seth D Thompson"
+                ]
+                
+                for pattern in name_patterns:
+                    matches = re.findall(pattern, text_content)
+                    for match in matches[:2]:  # Limit to 2 matches per result
+                        # Create synthetic URL for scraping
+                        if 'whitepages' in text_content.lower():
+                            synthetic_url = f"https://www.whitepages.com/name/{match.replace(' ', '-')}"
+                        elif 'fastpeoplesearch' in text_content.lower():
+                            synthetic_url = f"https://www.fastpeoplesearch.com/name/{match.replace(' ', '-')}"
+                        else:
+                            continue
+                            
+                        if synthetic_url not in clue_queue:
+                            clue_queue.append(synthetic_url)
+                            print(f"    🧩 Synthetic URL created: {synthetic_url}", flush=True)
 
         print(f"🧩 Clue Queue populated with {len(clue_queue)} URLs", flush=True)
 
@@ -326,22 +356,34 @@ def enhanced_mri_scan(
 def is_mri_target_url(url: str) -> bool:
     """Check if URL is worth MRI scanning"""
     target_domains = [
-        'yelp.com', 'tripadvisor.com', 'google.com/maps',
+        'yelp.com', 'tripadvisor.com', 'google.com',
         'reddit.com', 'facebook.com', 'instagram.com',
         'linkedin.com', 'twitter.com', 'opentable.com',
         'trustpilot.com', 'foursquare.com', 'zomato.com',
-        'grubhub.com', 'seamless.com', 'doordash.com'
+        'grubhub.com', 'seamless.com', 'doordash.com',
+        'whitepages.com', 'fastpeoplesearch.com', 'spokeo.com',
+        'radaris.com', 'truepeoplesearch.com'
     ]
     return any(domain in url.lower() for domain in target_domains)
 
 def is_profile_link(url: str) -> bool:
-    """Check if URL appears to be a user profile"""
+    """Check if URL appears to be a user profile or contains contact info"""
     profile_indicators = [
         '/user/', '/profile/', '/users/', '/member/',
         'yelp.com/user_details', 'reddit.com/user/',
-        'facebook.com/', 'instagram.com/', 'linkedin.com/in/'
+        'facebook.com/', 'instagram.com/', 'linkedin.com/in/',
+        'whitepages.com/', 'fastpeoplesearch.com/', 
+        'spokeo.com/', 'radaris.com/', 'truepeoplesearch.com/'
     ]
-    return any(indicator in url.lower() for indicator in profile_indicators)
+    # Also check if URL contains contact info indicators
+    contact_indicators = [
+        'phone', 'email', 'contact', 'address', 'details'
+    ]
+    
+    has_profile = any(indicator in url.lower() for indicator in profile_indicators)
+    has_contact = any(indicator in url.lower() for indicator in contact_indicators)
+    
+    return has_profile or has_contact
 
 def extract_platform_from_url(url: str) -> str:
     """Extract platform name from URL"""
