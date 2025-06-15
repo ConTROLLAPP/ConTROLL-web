@@ -1,4 +1,3 @@
-
 import os
 import requests
 import json
@@ -187,108 +186,83 @@ def enhanced_mri_scan(
 
         print(f"🔍 SERPER returned {len(all_results)} total results", flush=True)
 
-        # Extract URLs and contact info from results
         for i, result in enumerate(all_results):
-            print(f"📊 Processing result {i+1}/{len(all_results)}", flush=True)
+                print(f"📊 Processing result {i+1}/{len(all_results)}")
 
-            text_content = ""
-            url = ""
+                text_content = ""
+                url = ""
 
-            if isinstance(result, dict):
-                text_content = f"{result.get('title', '')} {result.get('snippet', '')}"
-                url = result.get('link', '')
-                print(f"    📄 Dict result - URL: {url[:50] if url else 'None'}...", flush=True)
-                print(f"    📄 Dict result - Text: {text_content[:100]}...", flush=True)
-            elif isinstance(result, str):
-                text_content = result
-                print(f"    📄 String result: {text_content[:100]}...", flush=True)
-                # Extract URLs from text
-                import re
-                url_pattern = r'https?://[^\s<>"\']+(?:[^\s<>"\'.,;!?])'
-                urls = re.findall(url_pattern, result)
-                url = urls[0] if urls else ""
-                print(f"    📄 Extracted URL: {url[:50] if url else 'None'}...", flush=True)
-
-            # Extract contact information from text
-            import re
-
-            # Email extraction with junk filtering
-            email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
-            emails = re.findall(email_pattern, text_content)
-            for found_email in emails:
-                # Filter out junk emails
-                from search_utils import filter_junk_identity
-                if not filter_junk_identity(email=found_email.lower(), verbose=True):
-                    discovered_data["emails"].append(found_email.lower())
-                    print(f"    📧 Email found: {found_email}", flush=True)
-                else:
-                    print(f"    🚫 Junk email filtered: {found_email}", flush=True)
-
-            # Phone extraction with junk filtering
-            phone_pattern = r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'
-            phones = re.findall(phone_pattern, text_content)
-            for found_phone in phones:
-                clean_phone = re.sub(r'[^\d]', '', found_phone)
-                if len(clean_phone) == 10:
-                    # Filter out junk phones
-                    from search_utils import filter_junk_identity
-                    if not filter_junk_identity(phone=clean_phone, verbose=True):
-                        discovered_data["phones"].append(clean_phone)
-                        print(f"    📞 Phone found: {found_phone}", flush=True)
+                if isinstance(result, dict):
+                    text_content = f"{result.get('title', '')} {result.get('snippet', '')}"
+                    url = result.get('link', '')
+                    print(f"    📄 Dict result - URL: {url[:50] if url else 'None'}...")
+                    print(f"    📄 Dict result - Text: {text_content[:100]}...")
+                elif isinstance(result, str):
+                    text_content = result
+                    print(f"    📄 String result: {text_content[:100]}...")
+                    # Extract URLs from text using improved regex
+                    import re
+                    url_pattern = r'https?://[^\s<>"\']+(?:[^\s<>"\'.,;!?])'
+                    urls = re.findall(url_pattern, result)
+                    if not urls:
+                        # Try to construct URLs from people search results
+                        if 'whitepages.com' in text_content.lower():
+                            # Look for names in the snippet
+                            name_match = re.search(r'([A-Z][a-z]+ [A-Z][a-z]*)', text_content)
+                            if name_match:
+                                url = f"https://www.whitepages.com/name/{name_match.group(1).replace(' ', '-')}"
+                        elif 'fastpeoplesearch.com' in text_content.lower():
+                            name_match = re.search(r'([A-Z][a-z]+ [A-Z][a-z]*)', text_content)
+                            if name_match:
+                                url = f"https://www.fastpeoplesearch.com/name/{name_match.group(1).replace(' ', '-')}"
                     else:
-                        print(f"    🚫 Junk phone filtered: {found_phone}", flush=True)
+                        url = urls[0]
+                    print(f"    📄 Extracted URL: {url[:50] if url else 'None'}...")
 
-            # Enhanced URL extraction from result content
-            all_urls = []
-            if url:
-                all_urls.append(url)
+        # Enhanced URL extraction from result content
+                all_urls = []
+                if url:
+                    all_urls.append(url)
 
-            # Extract additional URLs from text content
-            url_pattern = r'https?://[^\s<>"\']+(?:[^\s<>"\'.,;!?])'
-            additional_urls = re.findall(url_pattern, text_content)
-            all_urls.extend(additional_urls)
+                # Extract additional URLs from text content
+                url_pattern = r'https?://[^\s<>"\']+(?:[^\s<>"\'.,;!?])'
+                additional_urls = re.findall(url_pattern, text_content)
+                all_urls.extend(additional_urls)
 
-            # Process all found URLs
-            for found_url in all_urls:
-                if found_url and is_mri_target_url(found_url):
-                    print(f"    🎯 Target URL found: {found_url}", flush=True)
-                    
-                    if is_profile_link(found_url):
-                        discovered_data["profiles"].append({
-                            "url": found_url,
-                            "platform": extract_platform_from_url(found_url),
-                            "source_query": f"Query {i+1}"
-                        })
-                        print(f"    👤 Profile found: {found_url}", flush=True)
+                # FORCE target URL creation for people search sites
+                people_search_domains = ['whitepages.com', 'fastpeoplesearch.com', 'spokeo.com', 'radaris.com', 'truepeoplesearch.com']
+                for domain in people_search_domains:
+                    if domain in text_content.lower() and not any(domain in u for u in all_urls):
+                        # Extract name from snippet and create synthetic URL
+                        name_patterns = [
+                            r'([A-Z][a-z]+ [A-Z][a-z]*)',  # "Seth Moore"
+                            r'([A-Z][a-z]+ [A-Z] [A-Z][a-z]*)',  # "Seth D Moore"
+                        ]
+                        for pattern in name_patterns:
+                            name_match = re.search(pattern, text_content)
+                            if name_match:
+                                synthetic_url = f"https://www.{domain}/name/{name_match.group(1).replace(' ', '-')}"
+                                all_urls.append(synthetic_url)
+                                print(f"    🔧 Synthetic URL created: {synthetic_url}")
+                                break
 
-                    # Add to clue queue for potential scraping
-                    if found_url not in clue_queue:
-                        clue_queue.append(found_url)
-                        print(f"    🧩 URL added to clue queue: {found_url}", flush=True)
-                    
-            # If no URLs found but we have text content, create synthetic URLs for people search sites
-            if not all_urls and any(platform in str(i+1) for platform in ['whitepages', 'fastpeoplesearch', 'spokeo', 'radaris', 'truepeoplesearch']):
-                # Look for names in the text content that we can construct URLs for
-                import re
-                name_patterns = [
-                    r'([A-Z][a-z]+\s+[A-Z]\s*[A-Za-z]*)',  # "Seth D Thompson"
-                    r'Seth\s+D\s+([A-Z][a-z]+)',           # "Seth D Thompson"
-                ]
-                
-                for pattern in name_patterns:
-                    matches = re.findall(pattern, text_content)
-                    for match in matches[:2]:  # Limit to 2 matches per result
-                        # Create synthetic URL for scraping
-                        if 'whitepages' in text_content.lower():
-                            synthetic_url = f"https://www.whitepages.com/name/{match.replace(' ', '-')}"
-                        elif 'fastpeoplesearch' in text_content.lower():
-                            synthetic_url = f"https://www.fastpeoplesearch.com/name/{match.replace(' ', '-')}"
-                        else:
-                            continue
-                            
-                        if synthetic_url not in clue_queue:
-                            clue_queue.append(synthetic_url)
-                            print(f"    🧩 Synthetic URL created: {synthetic_url}", flush=True)
+                # Process all found URLs with enhanced filtering
+                for found_url in all_urls:
+                    if found_url and (is_mri_target_url(found_url) or any(domain in found_url for domain in people_search_domains)):
+                        print(f"    🎯 Target URL found: {found_url}")
+
+                        if is_profile_link(found_url) or any(domain in found_url for domain in people_search_domains):
+                            discovered_data["profiles"].append({
+                                "url": found_url,
+                                "platform": extract_platform_from_url(found_url),
+                                "source_query": f"Query {i+1}"
+                            })
+                            print(f"    👤 Profile found: {found_url}")
+
+                        # Add to clue queue for potential scraping - FORCE ADD people search URLs
+                        if found_url not in clue_queue:
+                            clue_queue.append(found_url)
+                            print(f"    🧩 URL added to clue queue: {found_url}")
 
         print(f"🧩 Clue Queue populated with {len(clue_queue)} URLs", flush=True)
 
@@ -379,10 +353,10 @@ def is_profile_link(url: str) -> bool:
     contact_indicators = [
         'phone', 'email', 'contact', 'address', 'details'
     ]
-    
+
     has_profile = any(indicator in url.lower() for indicator in profile_indicators)
     has_contact = any(indicator in url.lower() for indicator in contact_indicators)
-    
+
     return has_profile or has_contact
 
 def extract_platform_from_url(url: str) -> str:
