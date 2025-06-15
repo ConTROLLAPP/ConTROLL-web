@@ -3045,6 +3045,78 @@ def estimate_yelp_review_volume(real_name):
     """
     return estimate_review_volume(real_name)
 
+def generate_platform_queries(name, location, phrases=[]):
+    """Generate platform-specific search queries for MRI scanning"""
+    base_terms = [f'"{name}"']
+    if location:
+        base_terms.append(f'"{location}"')
+    for p in phrases:
+        base_terms.append(f'"{p}"')
+
+    combined = " ".join(base_terms)
+
+    platforms = [
+        "site:whitepages.com",
+        "site:fastpeoplesearch.com",
+        "site:truepeoplesearch.com",
+        "site:spokeo.com",
+        "site:radaris.com",
+        "site:reddit.com",
+        "site:trustpilot.com",
+        "site:truthsocial.com",
+        "site:facebook.com",
+        "site:linkedin.com",
+        "site:twitter.com",
+        "site:instagram.com",
+        "site:youtube.com",
+        "site:yelp.com",
+        "site:tripadvisor.com",
+        "site:google.com"
+    ]
+
+    result = [f"{site} {combined}" for site in platforms]
+    print(f"✅ Generated {len(platforms)} platform queries for '{name}' in '{location}'")
+    return result
+
+def extract_identity_clues(results, handle):
+    """Extract potential identity clues from search results"""
+    clues = set()
+    handle_lower = handle.lower()
+
+    for result in results:
+        if isinstance(result, dict):
+            title = result.get('title', '').lower()
+            snippet = result.get('snippet', '').lower()
+        else:
+            title = ""
+            snippet = str(result).lower()
+
+        # Look for full names
+        name_patterns = [
+            r'\b' + re.escape(handle_lower) + r'\s+([a-z]+)\b',
+            r'\b([a-z]+)\s+' + re.escape(handle_lower) + r'\b'
+        ]
+
+        for pattern in name_patterns:
+            matches = re.findall(pattern, title + ' ' + snippet)
+            for match in matches:
+                if len(match) > 2:
+                    clues.add(f"{handle} {match.title()}")
+
+        # Look for contact info
+        email_pattern = r'\b[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}\b'
+        phone_pattern = r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b'
+
+        emails = re.findall(email_pattern, snippet)
+        phones = re.findall(phone_pattern, snippet)
+
+        for email in emails:
+            clues.add(f"email:{email}")
+        for phone in phones:
+            clues.add(f"phone:{phone}")
+
+    return clues
+
 def purge_duplicate_aliases():
     """
     Clean up alias cache to remove duplicate aliases with different punctuation.
