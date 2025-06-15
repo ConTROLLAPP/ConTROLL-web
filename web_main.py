@@ -190,6 +190,97 @@ def guest_search():
         logger.error(f"❌ Guest search error: {e}")
         return jsonify({'error': str(e)}), 500
 
+@app.route('/api/alias/investigate', methods=['POST'])
+def alias_investigate():
+    """API endpoint for alias investigation - matches frontend expectations"""
+    try:
+        data = request.get_json()
+        handle = data.get('handle', '')
+        location = data.get('location', '')
+        platform = data.get('platform', '')
+        review_text = data.get('review_text', '')
+
+        if not handle:
+            return jsonify({'success': False, 'error': 'Missing handle'}), 400
+
+        logger.info(f"🔍 Starting alias investigation for: {handle}")
+        
+        # Use the same MRI logic as the alias_tools endpoint
+        try:
+            from mri_scanner import enhanced_mri_scan
+            mri_results = enhanced_mri_scan(handle, location=location)
+            logger.info(f"✅ MRI scan completed for {handle}")
+        except Exception as e:
+            logger.error(f"❌ MRI scan failed: {e}")
+            return jsonify({
+                'success': False,
+                'error': f'MRI scan failed: {str(e)}',
+                'investigation': {
+                    'handle': handle,
+                    'most_likely_name': 'Unknown',
+                    'risk_score': 0,
+                    'confidence_score': 0
+                }
+            }), 500
+
+        # Extract and evaluate results
+        discovered_emails = mri_results.get('discovered_data', {}).get('emails', [])
+        discovered_phones = mri_results.get('discovered_data', {}).get('phones', [])
+        discovered_profiles = mri_results.get('discovered_data', {}).get('profiles', [])
+
+        # Calculate risk and confidence
+        final_confidence = 30
+        risk_score = 20
+        star_rating = 5
+        
+        if discovered_emails or discovered_phones:
+            final_confidence = 85
+            risk_score = 70
+            star_rating = 2
+        
+        if len(discovered_profiles) >= 2:
+            risk_score = 90
+            star_rating = 1
+
+        # Format response for frontend
+        investigation_data = {
+            'handle': handle,
+            'most_likely_name': mri_results.get('most_likely_name', 'Unknown'),
+            'location': location,
+            'platform': platform,
+            'email': discovered_emails[0] if discovered_emails else None,
+            'phone': discovered_phones[0] if discovered_phones else None,
+            'risk_score': risk_score,
+            'star_rating': star_rating,
+            'confidence_score': final_confidence,
+            'stylometry_flags': [],
+            'matched_platforms': discovered_profiles,
+            'mri_scan_summary': {
+                'urls_scanned': mri_results.get('scan_summary', {}).get('urls_scanned', 0),
+                'content_extracted': len(discovered_profiles),
+                'reviews_filtered': 0,
+                'scan_complete': True
+            }
+        }
+
+        return jsonify({
+            'success': True,
+            'investigation': investigation_data
+        })
+
+    except Exception as e:
+        logger.error(f"❌ Alias investigation error: {e}")
+        return jsonify({
+            'success': False,
+            'error': str(e),
+            'investigation': {
+                'handle': data.get('handle', 'unknown') if 'data' in locals() else 'unknown',
+                'most_likely_name': 'Unknown',
+                'risk_score': 0,
+                'confidence_score': 0
+            }
+        }), 500
+
 @app.route('/api/review/analyze', methods=['POST'])
 def analyze_review():
     try:
