@@ -1,4 +1,10 @@
 {
-  "loc001": "Ocean 193 - Provincetown",
-  "loc002": "Test Kitchen - St. Thomas"
+  "loc001": {
+    "name": "Ocean 193 - Provincetown",
+    "timezone": "America/New_York"
+  },
+  "loc002": {
+    "name": "Test Kitchen - St. Thomas",
+    "timezone": "America/St_Thomas"
+  }
 }
