@@ -2,12 +2,8 @@ def evaluate_guest(confidence, platform_hits, stylometry_flags, writing_samples,
     """
     Assigns a risk score and star rating to a guest based on search findings.
 
-    Returns a dictionary:
-    {
-        "risk": 0–100,
-        "stars": 1–5,
-        "reason": "Explanation of why this rating was chosen"
-    }
+    Returns a tuple:
+    (risk, stars, reason, confidence)
     """
     risk = 0
     reason = []
@@ -79,8 +75,4 @@ def evaluate_guest(confidence, platform_hits, stylometry_flags, writing_samples,
     else:
         stars = 5
 
-    return {
-        "risk": risk,
-        "stars": stars,
-        "reason": ", ".join(reason)
-    }
+    return risk, stars, ", ".join(reason), confidence
