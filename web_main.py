@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, request, jsonify
 import logging
 import traceback
@@ -7,7 +8,7 @@ import sys
 
 app = Flask(__name__)
 
-# Enhanced logging configuration for production
+# Enhanced logging configuration
 logging.basicConfig(
     level=logging.INFO,
     format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
@@ -18,7 +19,6 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
-# Force immediate output flush
 sys.stdout.flush()
 sys.stderr.flush()
 
@@ -55,18 +55,22 @@ def status():
         'serper_api': 'Connected'
     })
 
-# Alias Investigation
 @app.route('/api/alias_tools', methods=['POST'])
 def handle_alias_investigation():
     try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
-
-        handle = data.get('handle', '').strip()
-        location = data.get('location', '').strip()
-        platform = data.get('platform', '').strip()
-        review_text = data.get('review_text', '').strip()
+        if request.is_json:
+            data = request.get_json()
+            handle = data.get('handle', '').strip()
+            location = data.get('location', '').strip()
+            platform = data.get('platform', '').strip()
+            review_text = data.get('review_text', '').strip()
+            response_type = 'json'
+        else:
+            handle = request.form.get('handle', '').strip()
+            location = request.form.get('location', '').strip()
+            platform = request.form.get('platform', '').strip()
+            review_text = request.form.get('review_text', '').strip()
+            response_type = 'html'
 
         if not handle:
             return jsonify({'error': 'Handle is required'}), 400
@@ -75,7 +79,6 @@ def handle_alias_investigation():
 
         from mri_scanner import enhanced_mri_scan
         mri_results = enhanced_mri_scan(handle, location=location)
-        logger.info(f"✅ MRI scan completed for {handle}")
 
         discovered_emails = mri_results.get('discovered_data', {}).get('emails', [])
         discovered_phones = mri_results.get('discovered_data', {}).get('phones', [])
@@ -104,154 +107,18 @@ def handle_alias_investigation():
             'confidence_score': final_confidence
         })
 
-        return jsonify({
-            'success': True,
-            'results': mri_results
-        })
+        if response_type == 'json':
+            return jsonify({'success': True, 'results': mri_results})
+        else:
+            return render_template('alias_mri.html', results=mri_results)
 
     except Exception as e:
         logger.error(f"❌ Alias investigation error: {str(e)}")
         logger.error(traceback.format_exc())
-        return jsonify({
-            'success': False,
-            'error': f'Investigation failed: {str(e)}'
-        }), 500
-
-# Guest Search
-@app.route('/api/guest/search', methods=['POST'])
-def handle_guest_search():
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
-
-        name = data.get('name', '').strip()
-        email = data.get('email', '').strip() or None
-        phone = data.get('phone', '').strip() or None
-
-        if not name:
-            return jsonify({'error': 'Guest name is required'}), 400
-
-        logger.info(f"🔍 Guest search for: {name}")
-
-        from mri_scanner import enhanced_mri_scan
-        results = enhanced_mri_scan(name, phone=phone)
-
-        discovered_emails = results.get('discovered_data', {}).get('emails', [])
-        discovered_phones = results.get('discovered_data', {}).get('phones', [])
-
-        if discovered_emails or discovered_phones:
-            risk_score = 75
-            star_rating = 2
-            rating_reason = "Contact information found"
+        if request.is_json:
+            return jsonify({'success': False, 'error': f'Investigation failed: {str(e)}'}), 500
         else:
-            risk_score = 30
-            star_rating = 4
-            rating_reason = "Limited information found"
-
-        return jsonify({
-            'success': True,
-            'results': {
-                'name': name,
-                'risk_score': risk_score,
-                'star_rating': star_rating,
-                'rating_reason': rating_reason,
-                'emails_found': len(discovered_emails),
-                'phones_found': len(discovered_phones),
-                'mri_data': results
-            }
-        })
-
-    except Exception as e:
-        logger.error(f"❌ Guest search error: {str(e)}")
-        logger.error(traceback.format_exc())
-        return jsonify({
-            'success': False,
-            'error': f'Guest search failed: {str(e)}'
-        }), 500
-
-# Review Analysis
-@app.route('/api/review/analyze', methods=['POST'])
-def handle_review_analysis():
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
-
-        review_text = data.get('review_text', '').strip()
-
-        if not review_text:
-            return jsonify({'error': 'Review text is required'}), 400
-
-        try:
-            from review_matcher import analyze_review_text
-            results = analyze_review_text(review_text)
-            return jsonify({
-                'success': True,
-                'results': results
-            })
-        except ImportError:
-            risk_indicators = ['terrible', 'worst', 'awful', 'horrible', 'disgusting', 'never again']
-            risk_count = sum(1 for indicator in risk_indicators if indicator.lower() in review_text.lower())
-
-            if risk_count >= 3:
-                tone = 'Very Negative'
-                risk_score = 80
-            elif risk_count >= 1:
-                tone = 'Negative'
-                risk_score = 60
-            else:
-                tone = 'Neutral/Positive'
-                risk_score = 20
-
-            return jsonify({
-                'success': True,
-                'results': {
-                    'tone': tone,
-                    'risk_score': risk_score,
-                    'risk_indicators_found': risk_count,
-                    'analysis_complete': True
-                }
-            })
-
-    except Exception as e:
-        logger.error(f"❌ Review analysis error: {e}")
-        logger.error(traceback.format_exc())
-        return jsonify({
-            'success': False,
-            'error': f'Review analysis failed: {str(e)}'
-        }), 500
-
-# MRI Direct API
-@app.route('/api/mri/scan', methods=['POST'])
-def handle_mri_scan():
-    try:
-        data = request.get_json()
-        if not data:
-            return jsonify({'error': 'No JSON data provided'}), 400
-
-        alias = data.get('alias', '').strip()
-        phone = data.get('phone', '').strip() or None
-        location = data.get('location', '').strip() or None
-
-        if not alias:
-            return jsonify({'error': 'Alias is required for MRI scan'}), 400
-
-        from mri_scanner import enhanced_mri_scan
-        results = enhanced_mri_scan(alias=alias, phone=phone, location=location, verbose=True)
-
-        return jsonify({
-            'success': True,
-            'results': results
-        })
-
-    except Exception as e:
-        logger.error(f"MRI scan error: {str(e)}")
-        logger.error(traceback.format_exc())
-        return jsonify({
-            'success': False,
-            'error': f'MRI scan failed: {str(e)}'
-        }), 500
+            return render_template("alias_mri.html", results={'error': str(e)})
 
 @app.errorhandler(404)
 def not_found(error):
