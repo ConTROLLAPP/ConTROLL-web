@@ -415,6 +415,27 @@ def filter_junk_identity(email=None, phone=None, alias=None, verbose=False):
     #         pass
     #     return True
     """
+    return False
+
+    def is_junk_identity(alias: str, email: str = None, verbose: bool = False) -> bool:
+        """
+        Filter out placeholder, fake, or junk identity artifacts.
+        Returns True if identity appears to be junk, False if legitimate.
+        """
+        if email:
+            email_lower = email.lower()
+            # Check exact matches
+            if email_lower in JUNK_EMAILS:
+                if verbose:
+                    print(f"⚠️ Junk email detected: {email}")
+                # Log the skipped identity
+                try:
+                    with open("junk_id_log.txt", "a") as log:
+                        log.write(f"Skipped junk email match: {alias}, {email}\n")
+                except:
+                    pass
+                return True
+        return False
     Filter out placeholder, fake, or junk identity artifacts
     Returns True if identity appears to be junk, False if legitimate
     """
