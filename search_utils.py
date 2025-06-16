@@ -309,7 +309,60 @@ def check_for_critic_identity(guest):
     return None
 
 
-def filter_junk_identity(email=None, phone=None, alias=None, verbose=False):
+def generate_platform_queries(name, location, phrases=[]):
+    """Generate search queries for different platforms"""
+    queries = []
+    
+    if name:
+        # Basic name queries
+        queries.append(f'"{name}" review')
+        queries.append(f'"{name}" yelp')
+        queries.append(f'"{name}" tripadvisor')
+        
+        if location:
+            queries.append(f'"{name}" "{location}" review')
+            queries.append(f'"{name}" "{location}" restaurant')
+        
+        # Platform-specific queries
+        queries.append(f'{name} site:yelp.com')
+        queries.append(f'{name} site:tripadvisor.com')
+        queries.append(f'{name} site:reddit.com')
+        
+    return queries
+
+def extract_identity_clues(results, handle):
+    """Extract identity clues from search results"""
+    clues = []
+    
+    if not results:
+        return clues
+        
+    for result in results:
+        if isinstance(result, dict):
+            title = result.get('title', '')
+            snippet = result.get('snippet', '')
+            url = result.get('link', '')
+            
+            # Look for the handle in the content
+            if handle and handle.lower() in f"{title} {snippet}".lower():
+                clues.append({
+                    'type': 'handle_match',
+                    'content': f"{title} {snippet}",
+                    'url': url,
+                    'confidence': 70
+                })
+                
+        elif isinstance(result, str):
+            if handle and handle.lower() in result.lower():
+                clues.append({
+                    'type': 'handle_match', 
+                    'content': result,
+                    'confidence': 60
+                })
+    
+    return clues
+
+def filter_junk_identity(email=None, phone=None, alias=None, verbose=False):</old_str>
     """
     Filter out placeholder, fake, or junk identity artifacts
     Returns True if identity appears to be junk, False if legitimate
