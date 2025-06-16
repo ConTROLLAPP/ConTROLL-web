@@ -414,8 +414,6 @@ def filter_junk_identity(email=None, phone=None, alias=None, verbose=False):
     #     except:
     #         pass
     #     return True
-
-    return False</old_str>
     """
     Filter out placeholder, fake, or junk identity artifacts
     Returns True if identity appears to be junk, False if legitimate
