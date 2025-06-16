@@ -1,3 +1,4 @@
+
 from flask import Flask, render_template, request, jsonify
 import logging
 import traceback
@@ -38,6 +39,14 @@ def index():
 def alias_tools_page():
     return render_template('alias_tools.html')
 
+@app.route('/guest_tools', methods=['GET'])
+def guest_tools_page():
+    return render_template('guest_tools.html')
+
+@app.route('/review_tools', methods=['GET'])
+def review_tools_page():
+    return render_template('review_tools.html')
+
 @app.route('/api/status')
 def status():
     return jsonify({
@@ -48,20 +57,24 @@ def status():
     })
 
 @app.route('/api/alias_tools', methods=['POST'])
-def alias_tools():
+def handle_alias_investigation():
     try:
         data = request.get_json()
-        handle = data.get('handle', '')
-        location = data.get('location', '')
-        platform = data.get('platform', '')
-        review_text = data.get('review_text', '')
+
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+
+        handle = data.get('handle', '').strip()
+        location = data.get('location', '').strip()
+        platform = data.get('platform', '').strip()
+        review_text = data.get('review_text', '').strip()
 
         if not handle:
-            return jsonify({'error': 'Missing handle'}), 400
+            return jsonify({'error': 'Handle is required'}), 400
 
         logger.info(f"🔍 Starting enhanced MRI scan for: {handle}")
 
-        # Import MRI scanner here to avoid import errors
+        # Import and run MRI scanner
         try:
             from mri_scanner import enhanced_mri_scan
             mri_results = enhanced_mri_scan(handle, location=location)
@@ -69,109 +82,89 @@ def alias_tools():
         except ImportError as e:
             logger.error(f"❌ MRI scanner import failed: {e}")
             return jsonify({
+                'success': False,
                 'error': 'MRI scanner not available',
-                'handle': handle,
-                'discovered_data': {'emails': [], 'phones': [], 'profiles': []},
-                'scan_summary': {'urls_scanned': 0, 'scan_complete': False}
+                'results': {
+                    'handle': handle,
+                    'discovered_data': {'emails': [], 'phones': [], 'profiles': []},
+                    'scan_summary': {'urls_scanned': 0, 'scan_complete': False}
+                }
             }), 500
         except Exception as e:
             logger.error(f"❌ MRI scan failed: {e}")
             return jsonify({
+                'success': False,
                 'error': f'MRI scan failed: {str(e)}',
-                'handle': handle,
-                'discovered_data': {'emails': [], 'phones': [], 'profiles': []},
-                'scan_summary': {'urls_scanned': 0, 'scan_complete': False}
+                'results': {
+                    'handle': handle,
+                    'discovered_data': {'emails': [], 'phones': [], 'profiles': []},
+                    'scan_summary': {'urls_scanned': 0, 'scan_complete': False}
+                }
             }), 500
 
-        # Extract discovered data from MRI results
+        # Calculate final evaluation
         discovered_emails = mri_results.get('discovered_data', {}).get('emails', [])
         discovered_phones = mri_results.get('discovered_data', {}).get('phones', [])
         discovered_profiles = mri_results.get('discovered_data', {}).get('profiles', [])
 
-        # Determine risk and rating based on discoveries
-        final_confidence = 30  # Default low confidence
-        risk_score = 20  # Default low risk
-        star_rating = 5  # Default high rating
+        final_confidence = 30
+        risk_score = 20
+        star_rating = 5
         rating_reason = "No significant risk indicators found"
 
-        # If we found contact info or profiles, increase confidence and risk
         if discovered_emails or discovered_phones:
             final_confidence = 85
             risk_score = 70
             star_rating = 2
             rating_reason = "Contact information discovered - potential reviewer tracking"
-            logger.info(f"📧 Found contact info: {len(discovered_emails)} emails, {len(discovered_phones)} phones")
 
-        # If we found multiple profiles, further increase risk
         if len(discovered_profiles) >= 2:
             risk_score = 90
             star_rating = 1
             rating_reason = "Multiple review profiles found - high risk pattern"
-            logger.info(f"🚨 High risk: {len(discovered_profiles)} profiles found")
 
-        # Try to run enhanced guest evaluation if available
-        try:
-            from conTROLL_decision_engine import evaluate_guest
-
-            evaluation = evaluate_guest(
-                confidence=final_confidence,
-                platform_hits=len(discovered_profiles),
-                stylometry_flags=0,  # Not available in web mode
-                writing_samples=1 if review_text else 0,
-                is_critic=False,  # Not determined in web mode
-                is_weak_critic=False
-            )
-
-            risk_score = evaluation['risk']
-            star_rating = evaluation['stars']
-            rating_reason = evaluation['reason']
-            logger.info(f"✅ Decision engine evaluation: {star_rating} stars, {risk_score} risk")
-
-        except Exception as eval_error:
-            logger.warning(f"⚠️ Decision engine not available: {eval_error}")
-            # Keep the manual calculations above
-
-        # Update MRI results with final evaluation
         mri_results.update({
             'risk_score': risk_score,
             'star_rating': star_rating,
             'rating_reason': rating_reason,
-            'confidence_score': final_confidence,
-            'handle': handle,
-            'location': location,
-            'platform': platform
+            'confidence_score': final_confidence
         })
 
-        logger.info(f"🎯 Final evaluation for {handle}: {star_rating} stars, {risk_score} risk")
-        return jsonify(mri_results)
+        return jsonify({
+            'success': True,
+            'results': mri_results
+        })
 
     except Exception as e:
-        logger.error(f"❌ Error during alias_tools scan: {e}", exc_info=True)
+        logger.error(f"❌ Alias investigation error: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({
-            'error': str(e),
-            'trace': traceback.format_exc(),
-            'handle': data.get('handle', 'unknown') if 'data' in locals() else 'unknown'
+            'success': False,
+            'error': f'Investigation failed: {str(e)}'
         }), 500
 
 @app.route('/api/guest/search', methods=['POST'])
-def guest_search():
+def handle_guest_search():
     try:
         data = request.get_json()
-        name = data.get('name', '')
-        email = data.get('email', '')
-        phone = data.get('phone', '')
+
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+
+        name = data.get('name', '').strip()
+        email = data.get('email', '').strip() or None
+        phone = data.get('phone', '').strip() or None
 
         if not name:
-            return jsonify({'error': 'Missing guest name'}), 400
+            return jsonify({'error': 'Guest name is required'}), 400
 
         logger.info(f"🔍 Guest search for: {name}")
 
         # Use MRI scanner for guest search
         try:
             from mri_scanner import enhanced_mri_scan
-            results = enhanced_mri_scan(name, phone=phone, email=email)
+            results = enhanced_mri_scan(name, phone=phone)
 
-            # Basic risk evaluation
             discovered_emails = results.get('discovered_data', {}).get('emails', [])
             discovered_phones = results.get('discovered_data', {}).get('phones', [])
 
@@ -185,164 +178,146 @@ def guest_search():
                 rating_reason = "Limited information found"
 
             return jsonify({
-                'name': name,
-                'risk_score': risk_score,
-                'star_rating': star_rating,
-                'rating_reason': rating_reason,
-                'emails_found': len(discovered_emails),
-                'phones_found': len(discovered_phones),
-                'mri_data': results
+                'success': True,
+                'results': {
+                    'name': name,
+                    'risk_score': risk_score,
+                    'star_rating': star_rating,
+                    'rating_reason': rating_reason,
+                    'emails_found': len(discovered_emails),
+                    'phones_found': len(discovered_phones),
+                    'mri_data': results
+                }
             })
 
         except Exception as mri_error:
             logger.error(f"❌ Guest search MRI failed: {mri_error}")
             return jsonify({
-                'name': name,
-                'risk_score': 20,
-                'star_rating': 5,
-                'rating_reason': 'Basic evaluation - MRI unavailable',
-                'emails_found': 0,
-                'phones_found': 0,
-                'error': str(mri_error)
+                'success': True,
+                'results': {
+                    'name': name,
+                    'risk_score': 20,
+                    'star_rating': 5,
+                    'rating_reason': 'Basic evaluation - MRI unavailable',
+                    'emails_found': 0,
+                    'phones_found': 0,
+                    'error': str(mri_error)
+                }
             })
 
     except Exception as e:
-        logger.error(f"❌ Guest search error: {e}")
-        return jsonify({'error': str(e)}), 500
-
-
-
-@app.route('/api/alias/investigate', methods=['POST'])
-def alias_investigate():
-    """API endpoint for alias investigation - matches frontend expectations"""
-    try:
-        data = request.get_json()
-        handle = data.get('handle', '')
-        location = data.get('location', '')
-        platform = data.get('platform', '')
-        review_text = data.get('review_text', '')
-
-        if not handle:
-            return jsonify({'success': False, 'error': 'Missing handle'}), 400
-
-        logger.info(f"🔍 Starting alias investigation for: {handle}")
-
-        # Use the same MRI logic as the alias_tools endpoint
-        try:
-            from mri_scanner import enhanced_mri_scan
-            mri_results = enhanced_mri_scan(handle, location=location)
-            logger.info(f"✅ MRI scan completed for {handle}")
-        except Exception as e:
-            logger.error(f"❌ MRI scan failed: {e}")
-            return jsonify({
-                'success': False,
-                'error': f'MRI scan failed: {str(e)}',
-                'investigation': {
-                    'handle': handle,
-                    'most_likely_name': 'Unknown',
-                    'risk_score': 0,
-                    'confidence_score': 0
-                }
-            }), 500
-
-        # Extract and evaluate results
-        discovered_emails = mri_results.get('discovered_data', {}).get('emails', [])
-        discovered_phones = mri_results.get('discovered_data', {}).get('phones', [])
-        discovered_profiles = mri_results.get('discovered_data', {}).get('profiles', [])
-
-        # Calculate risk and confidence
-        final_confidence = 30
-        risk_score = 20
-        star_rating = 5
-
-        if discovered_emails or discovered_phones:
-            final_confidence = 85
-            risk_score = 70
-            star_rating = 2
-
-        if len(discovered_profiles) >= 2:
-            risk_score = 90
-            star_rating = 1
-
-        # Format response for frontend
-        investigation_data = {
-            'handle': handle,
-            'most_likely_name': mri_results.get('most_likely_name', 'Unknown'),
-            'location': location,
-            'platform': platform,
-            'email': discovered_emails[0] if discovered_emails else None,
-            'phone': discovered_phones[0] if discovered_phones else None,
-            'risk_score': risk_score,
-            'star_rating': star_rating,
-            'confidence_score': final_confidence,
-            'stylometry_flags': [],
-            'matched_platforms': discovered_profiles,
-            'mri_scan_summary': {
-                'urls_scanned': mri_results.get('scan_summary', {}).get('urls_scanned', 0),
-                'content_extracted': len(discovered_profiles),
-                'reviews_filtered': 0,
-                'scan_complete': True
-            }
-        }
-
-        return jsonify({
-            'success': True,
-            'investigation': investigation_data
-        })
-
-    except Exception as e:
-        logger.error(f"❌ Alias investigation error: {e}")
+        logger.error(f"❌ Guest search error: {str(e)}")
+        logger.error(traceback.format_exc())
         return jsonify({
             'success': False,
-            'error': str(e),
-            'investigation': {
-                'handle': data.get('handle', 'unknown') if 'data' in locals() else 'unknown',
-                'most_likely_name': 'Unknown',
-                'risk_score': 0,
-                'confidence_score': 0
-            }
+            'error': f'Guest search failed: {str(e)}'
         }), 500
 
 @app.route('/api/review/analyze', methods=['POST'])
-def analyze_review():
+def handle_review_analysis():
     try:
         data = request.get_json()
-        review_text = data.get('review_text', '')
-        handle = data.get('handle', '')
+
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+
+        review_text = data.get('review_text', '').strip()
 
         if not review_text:
-            return jsonify({'error': 'Missing review text'}), 400
+            return jsonify({'error': 'Review text is required'}), 400
 
-        # Basic review analysis
-        risk_indicators = ['terrible', 'worst', 'awful', 'horrible', 'disgusting', 'never again']
-        risk_count = sum(1 for indicator in risk_indicators if indicator.lower() in review_text.lower())
+        # Try to use review matcher if available
+        try:
+            from review_matcher import analyze_review_text
+            results = analyze_review_text(review_text)
+            return jsonify({
+                'success': True,
+                'results': results
+            })
+        except ImportError:
+            # Fallback to basic analysis
+            risk_indicators = ['terrible', 'worst', 'awful', 'horrible', 'disgusting', 'never again']
+            risk_count = sum(1 for indicator in risk_indicators if indicator.lower() in review_text.lower())
 
-        if risk_count >= 3:
-            tone = 'Very Negative'
-            risk_score = 80
-        elif risk_count >= 1:
-            tone = 'Negative'
-            risk_score = 60
-        else:
-            tone = 'Neutral/Positive'
-            risk_score = 20
+            if risk_count >= 3:
+                tone = 'Very Negative'
+                risk_score = 80
+            elif risk_count >= 1:
+                tone = 'Negative'
+                risk_score = 60
+            else:
+                tone = 'Neutral/Positive'
+                risk_score = 20
 
-        return jsonify({
-            'tone': tone,
-            'risk_score': risk_score,
-            'risk_indicators_found': risk_count,
-            'handle': handle,
-            'analysis_complete': True
-        })
+            return jsonify({
+                'success': True,
+                'results': {
+                    'tone': tone,
+                    'risk_score': risk_score,
+                    'risk_indicators_found': risk_count,
+                    'analysis_complete': True
+                }
+            })
 
     except Exception as e:
         logger.error(f"❌ Review analysis error: {e}")
-        return jsonify({'error': str(e)}), 500
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': f'Review analysis failed: {str(e)}'
+        }), 500
+
+@app.route('/api/mri/scan', methods=['POST'])
+def handle_mri_scan():
+    try:
+        data = request.get_json()
+
+        if not data:
+            return jsonify({'error': 'No JSON data provided'}), 400
+
+        alias = data.get('alias', '').strip()
+        phone = data.get('phone', '').strip() or None
+        location = data.get('location', '').strip() or None
+
+        if not alias:
+            return jsonify({'error': 'Alias is required for MRI scan'}), 400
+
+        # Import and run MRI scan
+        from mri_scanner import enhanced_mri_scan
+
+        results = enhanced_mri_scan(
+            alias=alias,
+            phone=phone,
+            location=location,
+            verbose=True
+        )
+
+        return jsonify({
+            'success': True,
+            'results': results
+        })
+
+    except Exception as e:
+        logger.error(f"MRI scan error: {str(e)}")
+        logger.error(traceback.format_exc())
+        return jsonify({
+            'success': False,
+            'error': f'MRI scan failed: {str(e)}'
+        }), 500
+
+@app.errorhandler(404)
+def not_found(error):
+    return jsonify({'error': 'Endpoint not found'}), 404
+
+@app.errorhandler(405)
+def method_not_allowed(error):
+    return jsonify({'error': 'Method not allowed'}), 405
+
+@app.errorhandler(500)
+def internal_error(error):
+    return jsonify({'error': 'Internal server error'}), 500
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
     logger.info(f"🚀 ConTROLL Web API starting on port {port}")
-    logger.info(f"🔧 Debug mode: False")
-    logger.info(f"🌐 Host: 0.0.0.0")
-    sys.stdout.flush()
     app.run(host='0.0.0.0', port=port, debug=False)
