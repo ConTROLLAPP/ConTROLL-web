@@ -312,37 +312,37 @@ def check_for_critic_identity(guest):
 def generate_platform_queries(name, location, phrases=[]):
     """Generate search queries for different platforms"""
     queries = []
-    
+
     if name:
         # Basic name queries
         queries.append(f'"{name}" review')
         queries.append(f'"{name}" yelp')
         queries.append(f'"{name}" tripadvisor')
-        
+
         if location:
             queries.append(f'"{name}" "{location}" review')
             queries.append(f'"{name}" "{location}" restaurant')
-        
+
         # Platform-specific queries
         queries.append(f'{name} site:yelp.com')
         queries.append(f'{name} site:tripadvisor.com')
         queries.append(f'{name} site:reddit.com')
-        
+
     return queries
 
 def extract_identity_clues(results, handle):
     """Extract identity clues from search results"""
     clues = []
-    
+
     if not results:
         return clues
-        
+
     for result in results:
         if isinstance(result, dict):
             title = result.get('title', '')
             snippet = result.get('snippet', '')
             url = result.get('link', '')
-            
+
             # Look for the handle in the content
             if handle and handle.lower() in f"{title} {snippet}".lower():
                 clues.append({
@@ -351,7 +351,7 @@ def extract_identity_clues(results, handle):
                     'url': url,
                     'confidence': 70
                 })
-                
+
         elif isinstance(result, str):
             if handle and handle.lower() in result.lower():
                 clues.append({
@@ -359,7 +359,7 @@ def extract_identity_clues(results, handle):
                     'content': result,
                     'confidence': 60
                 })
-    
+
     return clues
 
 def filter_junk_identity(email=None, phone=None, alias=None, verbose=False):
@@ -380,7 +380,7 @@ def filter_junk_identity(email=None, phone=None, alias=None, verbose=False):
             except:
                 pass
             return True
-        
+
         # Check for generic business email patterns
         generic_patterns = ["info@", "contact@", "support@", "admin@", "webmaster@", "sales@", "marketing@"]
         for pattern in generic_patterns:
@@ -433,7 +433,7 @@ def filter_junk_identity(email=None, phone=None, alias=None, verbose=False):
             except:
                 pass
             return True
-        
+
         # Check for generic business email patterns
         generic_patterns = ["info@", "contact@", "support@", "admin@", "webmaster@", "sales@", "marketing@"]
         for pattern in generic_patterns:
@@ -1054,7 +1054,7 @@ def scrape_contact_info(url, verbose=False):
                 "social_links": social_links,
                 "html_snippet": html[:1000]  # optional for debugging
             }
-            
+
             if verbose:
                 print(f"✅ Contact extraction complete: {len(result['emails'])} emails, {len(result['phones'])} phones")
                 if result["emails"]:
@@ -1065,7 +1065,7 @@ def scrape_contact_info(url, verbose=False):
                     print(f"   📝 Review platforms: {review_platforms}")
                 if social_links:
                     print(f"   📱 Social links: {social_links}")
-            
+
             return result
         else:
             return {"error": f"Failed to scrape: {response.status_code}"}
@@ -2652,16 +2652,16 @@ def add_reverse_email_layer_enhanced(phone_number, guest_full_name=None):
         # 🔹 2. Enhanced Email Triangulation Layer
         if not found_emails and guest_full_name and guest_full_name != "Unknown":
             print(f"📧 [Enhanced Triangulation] Trying synthetic email patterns for: {guest_full_name}")
-            
+
             # Parse name components
             name_parts = guest_full_name.strip().split()
             if len(name_parts) >= 2:
                 first = name_parts[0]
                 last = name_parts[-1]
-                
+
                 # Try first name + last name + phone fragments
                 common_domains = ["gmail.com", "yahoo.com", "icloud.com", "hotmail.com", "outlook.com"]
-                
+
                 for domain in common_domains:
                     synthetic_patterns = [
                         f"{first.lower()}.{last.lower()}@{domain}",
@@ -2669,25 +2669,25 @@ def add_reverse_email_layer_enhanced(phone_number, guest_full_name=None):
                         f"{first[0].lower()}{last.lower()}@{domain}",
                         f"{first.lower()}{last[0].lower()}@{domain}"
                     ]
-                    
+
                     for synthetic_email in synthetic_patterns:
                         # Search for this email pattern on LinkedIn
                         query = f'"{synthetic_email}" site:linkedin.com'
                         linkedin_results = query_serper(query, num_results=2)
-                        
+
                         if linkedin_results:
                             for result in linkedin_results:
                                 text_content = result if isinstance(result, str) else f"{result.get('title', '')} {result.get('snippet', '')}"
-                                
+
                                 # Check if results match the guest's full name
                                 if matches_identity_in_text(text_content, guest_full_name):
                                     found_emails.add(synthetic_email)
                                     print(f"📧 [Enhanced Triangulation] Synthetic email validated: {synthetic_email}")
                                     break
-                            
+
                             if synthetic_email in found_emails:
                                 break
-                    
+
                     if found_emails:
                         break
 
@@ -2708,21 +2708,21 @@ def matches_identity_in_text(text_content, guest_full_name):
     """
     text_lower = text_content.lower()
     name_lower = guest_full_name.lower()
-    
+
     # Check for exact name match
     if name_lower in text_lower:
         return True
-    
+
     # Check for name components
     name_parts = guest_full_name.split()
     if len(name_parts) >= 2:
         first_name = name_parts[0].lower()
         last_name = name_parts[-1].lower()
-        
+
         # Both first and last name should appear
         if first_name in text_lower and last_name in text_lower:
             return True
-    
+
     return False
 
 def process_yelp_profile_discovery(profile_url, snippet, verbose=False):
@@ -2924,7 +2924,7 @@ def estimate_review_volume(real_name):
     """
     if not real_name or real_name == "Unknown":
         return 0
-    
+
     try:
         # Cross-platform search queries
         platform_queries = [
@@ -2940,17 +2940,17 @@ def estimate_review_volume(real_name):
             f'"{real_name}" restaurant reviewer',
             f'"{real_name}" food critic reviews'
         ]
-        
+
         total_review_estimate = 0
         platform_counts = {}
-        
+
         for query in platform_queries[:8]:  # Limit to 8 queries to avoid API exhaustion
             results = query_serper(query, num_results=3)
-            
+
             if results:
                 for result in results:
                     text_content = result if isinstance(result, str) else f"{result.get('title', '')} {result.get('snippet', '')}"
-                    
+
                     # Enhanced review count patterns for cross-platform detection
                     import re
                     review_patterns = [
@@ -2970,7 +2970,7 @@ def estimate_review_volume(real_name):
                         r'(\d+)\s+experiences?\s+shared',      # TripAdvisor format
                         r'Level\s+\d+\s+Local\s+Guide.*?(\d+)\s+reviews', # Google Local Guide
                     ]
-                    
+
                     for pattern in review_patterns:
                         matches = re.findall(pattern, text_content, re.IGNORECASE)
                         if matches:
@@ -2980,7 +2980,7 @@ def estimate_review_volume(real_name):
                                 if review_count >= 3 and review_count <= 1000:  # Reasonable bounds
                                     if review_count > total_review_estimate:
                                         total_review_estimate = review_count
-                                        
+
                                     # Track per-platform for detailed analysis
                                     platform = "Unknown"
                                     if "yelp.com" in query:
@@ -2995,23 +2995,23 @@ def estimate_review_volume(real_name):
                                         platform = "Facebook"
                                     elif "zomato.com" in query:
                                         platform = "Zomato"
-                                    
+
                                     if platform not in platform_counts:
                                         platform_counts[platform] = review_count
                                     else:
                                         platform_counts[platform] = max(platform_counts[platform], review_count)
-                                        
+
                                     print(f"📊 {platform} review volume detected: {review_count} reviews for {real_name}")
-                                    
+
                             except (ValueError, IndexError):
                                 continue
-        
+
         # Calculate aggregate review volume across platforms
         if platform_counts:
             # Use highest single platform count, but boost for multi-platform presence
             max_single_platform = max(platform_counts.values())
             platform_count = len(platform_counts)
-            
+
             # Multi-platform boost: +50% for 2 platforms, +100% for 3+
             if platform_count >= 3:
                 total_review_estimate = int(max_single_platform * 2.0)
@@ -3021,11 +3021,11 @@ def estimate_review_volume(real_name):
                 print(f"🌐 Cross-platform reviewer: {platform_count} platforms, boosted estimate: {total_review_estimate}")
             else:
                 total_review_estimate = max_single_platform
-                
+
             print(f"📈 Platform breakdown: {platform_counts}")
-        
+
         return total_review_estimate
-        
+
     except Exception as e:
         print(f"⚠️ Cross-platform review volume estimation error for {real_name}: {e}")
         return 0
@@ -3038,7 +3038,7 @@ def estimate_review_volume(real_name):
     """
     if not real_name or real_name == "Unknown":
         return 0
-    
+
     try:
         # Cross-platform search queries
         platform_queries = [
@@ -3054,17 +3054,17 @@ def estimate_review_volume(real_name):
             f'"{real_name}" restaurant reviewer',
             f'"{real_name}" food critic reviews'
         ]
-        
+
         total_review_estimate = 0
         platform_counts = {}
-        
+
         for query in platform_queries[:8]:  # Limit to 8 queries to avoid API exhaustion
             results = query_serper(query, num_results=3)
-            
+
             if results:
                 for result in results:
                     text_content = result if isinstance(result, str) else f"{result.get('title', '')} {result.get('snippet', '')}"
-                    
+
                     # Enhanced review count patterns for cross-platform detection
                     import re
                     review_patterns = [
@@ -3084,7 +3084,7 @@ def estimate_review_volume(real_name):
                         r'(\d+)\s+experiences?\s+shared',      # TripAdvisor format
                         r'Level\s+\d+\s+Local\s+Guide.*?(\d+)\s+reviews', # Google Local Guide
                     ]
-                    
+
                     for pattern in review_patterns:
                         matches = re.findall(pattern, text_content, re.IGNORECASE)
                         if matches:
@@ -3094,7 +3094,7 @@ def estimate_review_volume(real_name):
                                 if review_count >= 3 and review_count <= 1000:  # Reasonable bounds
                                     if review_count > total_review_estimate:
                                         total_review_estimate = review_count
-                                        
+
                                     # Track per-platform for detailed analysis
                                     platform = "Unknown"
                                     if "yelp.com" in query:
@@ -3109,23 +3109,23 @@ def estimate_review_volume(real_name):
                                         platform = "Facebook"
                                     elif "zomato.com" in query:
                                         platform = "Zomato"
-                                    
+
                                     if platform not in platform_counts:
                                         platform_counts[platform] = review_count
                                     else:
                                         platform_counts[platform] = max(platform_counts[platform], review_count)
-                                        
+
                                     print(f"📊 {platform} review volume detected: {review_count} reviews for {real_name}")
-                                    
+
                             except (ValueError, IndexError):
                                 continue
-        
+
         # Calculate aggregate review volume across platforms
         if platform_counts:
             # Use highest single platform count, but boost for multi-platform presence
             max_single_platform = max(platform_counts.values())
             platform_count = len(platform_counts)
-            
+
             # Multi-platform boost: +50% for 2 platforms, +100% for 3+
             if platform_count >= 3:
                 total_review_estimate = int(max_single_platform * 2.0)
@@ -3135,11 +3135,11 @@ def estimate_review_volume(real_name):
                 print(f"🌐 Cross-platform reviewer: {platform_count} platforms, boosted estimate: {total_review_estimate}")
             else:
                 total_review_estimate = max_single_platform
-                
+
             print(f"📈 Platform breakdown: {platform_counts}")
-        
+
         return total_review_estimate
-        
+
     except Exception as e:
         print(f"⚠️ Cross-platform review volume estimation error for {real_name}: {e}")
         return 0
@@ -3236,13 +3236,13 @@ def purge_duplicate_aliases():
         return
 
     print(f"🧹 Cleaning alias cache: {len(data)} entries before normalization")
-    
+
     normalized = {}
     conflicts = []
-    
+
     for original_alias, identity in data.items():
         normalized_key = normalize_alias(original_alias)
-        
+
         if normalized_key in normalized:
             # Conflict detected - prefer the identity with more detail
             existing_identity = normalized[normalized_key]
@@ -3257,13 +3257,13 @@ def purge_duplicate_aliases():
     # Save cleaned cache
     with open("alias_cache.json", "w") as f:
         json.dump(normalized, f, indent=2)
-    
+
     print(f"✅ Cache cleaned: {len(normalized)} unique normalized entries")
     if conflicts:
         print(f"⚠️ Resolved {len(conflicts)} conflicts:")
         for conflict in conflicts[:5]:  # Show first 5 conflicts
             print(f"   • {conflict}")
-    
+
     return len(data) - len(normalized)  # Return number of duplicates removed
 
 def scrape_contact_info(url, verbose=False):
@@ -3330,7 +3330,7 @@ def scrape_contact_info(url, verbose=False):
                 "social_links": social_links,
                 "html_snippet": html[:1000]  # optional for debugging
             }
-            
+
             if verbose:
                 print(f"✅ Contact extraction complete: {len(result['emails'])} emails, {len(result['phones'])} phones")
                 if result["emails"]:
@@ -3341,7 +3341,7 @@ def scrape_contact_info(url, verbose=False):
                     print(f"   📝 Review platforms: {review_platforms}")
                 if social_links:
                     print(f"   📱 Social links: {social_links}")
-            
+
             return result
         else:
             return {"error": f"Failed to scrape: {response.status_code}"}
