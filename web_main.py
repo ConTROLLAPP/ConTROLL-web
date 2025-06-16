@@ -1,17 +1,37 @@
-
 from flask import Flask, render_template, request, jsonify
 import logging
 import traceback
 import json
 import os
+import sys
 
 app = Flask(__name__)
 
-logging.basicConfig(level=logging.INFO)
+# Enhanced logging configuration for production
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.StreamHandler(sys.stdout),
+        logging.StreamHandler(sys.stderr)
+    ]
+)
 logger = logging.getLogger(__name__)
+
+# Force immediate output flush
+sys.stdout.flush()
+sys.stderr.flush()
+
+@app.before_request
+def log_request_info():
+    logger.info(f"Request: {request.method} {request.url}")
+    logger.info(f"Headers: {dict(request.headers)}")
+    if request.json:
+        logger.info(f"JSON Data: {request.json}")
 
 @app.route('/', methods=['GET'])
 def index():
+    logger.info("Index route accessed")
     return render_template('index.html')
 
 @app.route('/alias_tools', methods=['GET'])
@@ -40,7 +60,7 @@ def alias_tools():
             return jsonify({'error': 'Missing handle'}), 400
 
         logger.info(f"🔍 Starting enhanced MRI scan for: {handle}")
-        
+
         # Import MRI scanner here to avoid import errors
         try:
             from mri_scanner import enhanced_mri_scan
@@ -92,7 +112,7 @@ def alias_tools():
         # Try to run enhanced guest evaluation if available
         try:
             from conTROLL_decision_engine import evaluate_guest
-            
+
             evaluation = evaluate_guest(
                 confidence=final_confidence,
                 platform_hits=len(discovered_profiles),
@@ -101,12 +121,12 @@ def alias_tools():
                 is_critic=False,  # Not determined in web mode
                 is_weak_critic=False
             )
-            
+
             risk_score = evaluation['risk']
             star_rating = evaluation['stars']
             rating_reason = evaluation['reason']
             logger.info(f"✅ Decision engine evaluation: {star_rating} stars, {risk_score} risk")
-            
+
         except Exception as eval_error:
             logger.warning(f"⚠️ Decision engine not available: {eval_error}")
             # Keep the manual calculations above
@@ -150,11 +170,11 @@ def guest_search():
         try:
             from mri_scanner import enhanced_mri_scan
             results = enhanced_mri_scan(name, phone=phone, email=email)
-            
+
             # Basic risk evaluation
             discovered_emails = results.get('discovered_data', {}).get('emails', [])
             discovered_phones = results.get('discovered_data', {}).get('phones', [])
-            
+
             if discovered_emails or discovered_phones:
                 risk_score = 75
                 star_rating = 2
@@ -190,6 +210,8 @@ def guest_search():
         logger.error(f"❌ Guest search error: {e}")
         return jsonify({'error': str(e)}), 500
 
+
+
 @app.route('/api/alias/investigate', methods=['POST'])
 def alias_investigate():
     """API endpoint for alias investigation - matches frontend expectations"""
@@ -204,7 +226,7 @@ def alias_investigate():
             return jsonify({'success': False, 'error': 'Missing handle'}), 400
 
         logger.info(f"🔍 Starting alias investigation for: {handle}")
-        
+
         # Use the same MRI logic as the alias_tools endpoint
         try:
             from mri_scanner import enhanced_mri_scan
@@ -232,12 +254,12 @@ def alias_investigate():
         final_confidence = 30
         risk_score = 20
         star_rating = 5
-        
+
         if discovered_emails or discovered_phones:
             final_confidence = 85
             risk_score = 70
             star_rating = 2
-        
+
         if len(discovered_profiles) >= 2:
             risk_score = 90
             star_rating = 1
@@ -294,7 +316,7 @@ def analyze_review():
         # Basic review analysis
         risk_indicators = ['terrible', 'worst', 'awful', 'horrible', 'disgusting', 'never again']
         risk_count = sum(1 for indicator in risk_indicators if indicator.lower() in review_text.lower())
-        
+
         if risk_count >= 3:
             tone = 'Very Negative'
             risk_score = 80
@@ -319,4 +341,8 @@ def analyze_review():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 5000))
+    logger.info(f"🚀 ConTROLL Web API starting on port {port}")
+    logger.info(f"🔧 Debug mode: False")
+    logger.info(f"🌐 Host: 0.0.0.0")
+    sys.stdout.flush()
     app.run(host='0.0.0.0', port=port, debug=False)
