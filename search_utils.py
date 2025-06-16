@@ -362,7 +362,60 @@ def extract_identity_clues(results, handle):
     
     return clues
 
-def filter_junk_identity(email=None, phone=None, alias=None, verbose=False):</old_str>
+def filter_junk_identity(email=None, phone=None, alias=None, verbose=False):
+    """
+    Filter out placeholder, fake, or junk identity artifacts
+    Returns True if identity appears to be junk, False if legitimate
+    """
+    if email:
+        email_lower = email.lower()
+        # Check exact matches
+        if email_lower in JUNK_EMAILS:
+            if verbose:
+                print(f"⚠️ Junk email detected: {email}")
+            # Log the skipped identity
+            try:
+                with open("junk_id_log.txt", "a") as log:
+                    log.write(f"Skipped junk email match: {alias}, {email}\n")
+            except:
+                pass
+            return True
+        
+        # Check for generic business email patterns
+        generic_patterns = ["info@", "contact@", "support@", "admin@", "webmaster@", "sales@", "marketing@"]
+        for pattern in generic_patterns:
+            if email_lower.startswith(pattern):
+                if verbose:
+                    print(f"⚠️ Generic business email detected: {email}")
+                try:
+                    with open("junk_id_log.txt", "a") as log:
+                        log.write(f"Skipped generic email: {alias}, {email}\n")
+                except:
+                    pass
+                return True
+
+    if phone and phone in JUNK_PHONES:
+        if verbose:
+            print(f"⚠️ Junk phone detected: {phone}")
+        try:
+            with open("junk_id_log.txt", "a") as log:
+                log.write(f"Skipped junk phone match: {alias}, {phone}\n")
+        except:
+            pass
+        return True
+
+    # Commented out because 'address' is undefined — needs future integration
+    # if address and any(junk in address.lower() for junk in JUNK_ADDRESSES):
+    #     if verbose:
+    #         print(f"⚠️ Junk address detected: {address}")
+    #     try:
+    #         with open("junk_id_log.txt", "a") as log:
+    #             log.write(f"Skipped junk address match: {alias}, {address}\n")
+    #     except:
+    #         pass
+    #     return True
+
+    return False</old_str>
     """
     Filter out placeholder, fake, or junk identity artifacts
     Returns True if identity appears to be junk, False if legitimate
