@@ -2,7 +2,7 @@ import os
 import requests
 import json
 from typing import Dict, List, Any
-from search_utils import query_serper
+from search_utils import query_serper, run_verbose_serper_scan, analyze_serper_results
 
 # Load secrets from secrets.json
 try:
@@ -167,17 +167,28 @@ def enhanced_mri_scan(
         for i, query in enumerate(queries, 1):
             print(f"🔍 Executing query {i}/{len(queries)}: {query[:50]}...", flush=True)
             try:
-                print(f"📡 Calling query_serper with query: {query}", flush=True)
-                result = query_serper(query, num_results=5)
-                print(f"📡 query_serper returned: {type(result)}, length: {len(result) if result else 0}", flush=True)
-
-                # 🔍 DEBUG: Print raw SERPER result
-                print("SERPER raw results:")
-                print(json.dumps(result, indent=2))
+                print(f"📡 Calling run_verbose_serper_scan with query: {query}", flush=True)
+                from search_utils import run_verbose_serper_scan
+                result = run_verbose_serper_scan(query)
+                print(f"📡 run_verbose_serper_scan returned: {type(result)}, length: {len(result) if result else 0}", flush=True)
 
                 if result:
                     all_results.extend(result)
                     print(f"    ✅ Query returned {len(result)} results", flush=True)
+                    
+                    # 🧠 ANALYZE SERPER RESULTS AND EXTRACT CLUES
+                    from search_utils import analyze_serper_results
+                    extracted_clues = analyze_serper_results(result, query)
+                    
+                    # Add discovered emails and phones to main discovered_data
+                    discovered_data["emails"].extend(extracted_clues.get("emails", []))
+                    discovered_data["phones"].extend(extracted_clues.get("phones", []))
+                    
+                    # Add URLs to clue queue for scraping
+                    clue_queue.extend(extracted_clues.get("urls", []))
+                    
+                    print(f"    🧠 Extracted: {len(extracted_clues.get('emails', []))} emails, {len(extracted_clues.get('phones', []))} phones, {len(extracted_clues.get('urls', []))} URLs")
+                    
                     # Show first result for debugging
                     if len(result) > 0:
                         print(f"    📄 Sample result: {str(result[0])[:100]}...", flush=True)
