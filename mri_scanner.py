@@ -171,6 +171,10 @@ def enhanced_mri_scan(
                 result = query_serper(query, num_results=5)
                 print(f"📡 query_serper returned: {type(result)}, length: {len(result) if result else 0}", flush=True)
 
+                # 🔍 DEBUG: Print raw SERPER result
+                print("SERPER raw results:")
+                print(json.dumps(result, indent=2))
+
                 if result:
                     all_results.extend(result)
                     print(f"    ✅ Query returned {len(result)} results", flush=True)
@@ -266,9 +270,18 @@ def enhanced_mri_scan(
 
         print(f"🧩 Clue Queue populated with {len(clue_queue)} URLs", flush=True)
 
+        # 🧠 DEBUG: Show clues and URLs
+        print(f"🧠 Clues found: {clue_queue}")
+        print(f"🔗 URLs to scrape: {clue_queue}")
+
         # Phase 2: URL Scraping
         print(f"🕷️ Starting URL scraping phase...", flush=True)
         max_scrapes = min(8, len(clue_queue))  # Limit to prevent timeout
+
+        if clue_queue:
+            print(f"🚀 Attempting to scrape {len(clue_queue)} URLs via Puppeteer or ScraperAPI...")
+        else:
+            print("⚠️ No URLs found to scrape.")
 
         for i, url in enumerate(clue_queue[:max_scrapes], 1):
             print(f"🧪 [{i}/{max_scrapes}] Scraping URL: {url}", flush=True)
