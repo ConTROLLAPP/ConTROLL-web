@@ -3323,7 +3323,7 @@ def check_phone_penetration(phone_number):
 
 
 
-def run_verbose_serper_scan(query: str, max_results: int = 20) -> list:
+def run_verbose_serper_scan(query: str, max_results: int = 20):
     """
     Runs a verbose SERPER scan and returns detailed results from multiple query variants.
     """
@@ -3345,7 +3345,7 @@ def run_verbose_serper_scan(query: str, max_results: int = 20) -> list:
     print(f"✅ Found {len(results)} results across {len(query_variants)} query variants.")
     return results
 
-def generate_query_variants(name: str) -> list:
+def generate_query_variants(name: str):
     """
     Generates expanded query variations for a name like 'Seth D.'
     """
