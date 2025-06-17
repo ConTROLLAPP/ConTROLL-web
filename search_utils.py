@@ -3323,19 +3323,53 @@ def check_phone_penetration(phone_number):
 
 
 
-def run_verbose_serper_scan(query: str, alias: str = None, verbose: bool = False) -> dict:
+def run_verbose_serper_scan(query: str, max_results: int = 20) -> list:
     """
-    Run a verbose SERPER query and return full JSON result.
+    Runs a verbose SERPER scan and returns detailed results from multiple query variants.
     """
-    print(f"🔎 Running VERBOSE SERPER scan for query: {query}")
-    try:
-        result = query_serper(query)
-        if verbose:
-            print("🔍 SERPER Raw Result:")
-            print(json.dumps(result, indent=2))
-        return result
-    except Exception as e:
-        print(f"❌ SERPER verbose scan failed: {e}")
-        return {}
+    print(f"🧠 Running verbose SERPER scan for: {query}")
+    results = []
+    query_variants = generate_query_variants(query)
+
+    for variant in query_variants:
+        print(f"🔍 Querying SERPER with: {variant}")
+        try:
+            response = query_serper(variant)
+            if isinstance(response, dict) and response.get("organic"):
+                results.extend(response["organic"])
+            elif isinstance(response, list):
+                results.extend(response)
+        except Exception as e:
+            print(f"⚠️ SERPER query failed for '{variant}': {e}")
+
+    print(f"✅ Found {len(results)} results across {len(query_variants)} query variants.")
+    return results
+
+def generate_query_variants(name: str) -> list:
+    """
+    Generates expanded query variations for a name like 'Seth D.'
+    """
+    name = name.strip()
+    base_variants = [name]
+    
+    if "." in name and " " in name:
+        # Expand from 'Seth D.' to variants
+        parts = name.replace(".", "").split()
+        if len(parts) == 2:
+            first, initial = parts
+            base_variants.extend([
+                f"{first} {initial} last name",
+                f"{first} {initial} food reviewer",
+                f"{first} {initial} yelp",
+                f"{first} {initial} restaurant review",
+                f"{first} {initial} complaints",
+                f"{first} {initial} MA",
+                f"{first} {initial} Waltham",
+                f"{first} {initial} critic",
+                f"{first} {initial} reddit",
+                f"{first} {initial} tripadvisor"
+            ])
+    
+    return list(set(base_variants))  # Ensure uniqueness
 
 # Code analysis: This code applies a fix to enhance Yelp review count detection and critic behavior identification during profile extraction.
