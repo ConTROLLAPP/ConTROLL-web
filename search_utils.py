@@ -3321,4 +3321,21 @@ def check_phone_penetration(phone_number):
 
     return matches
 
+
+
+def run_verbose_serper_scan(query: str, alias: str = None, verbose: bool = False) -> dict:
+    """
+    Run a verbose SERPER query and return full JSON result.
+    """
+    print(f"🔎 Running VERBOSE SERPER scan for query: {query}")
+    try:
+        result = query_serper(query)
+        if verbose:
+            print("🔍 SERPER Raw Result:")
+            print(json.dumps(result, indent=2))
+        return result
+    except Exception as e:
+        print(f"❌ SERPER verbose scan failed: {e}")
+        return {}
+
 # Code analysis: This code applies a fix to enhance Yelp review count detection and critic behavior identification during profile extraction.
